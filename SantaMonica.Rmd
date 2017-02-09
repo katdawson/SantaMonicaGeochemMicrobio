@@ -1,0 +1,282 @@
+---
+title: "Integrating molecular biology and geochemical tools to explore sulfur and methane metabolism in the Santa Monica Basin, CA"
+author: "Kat Dawson"
+date: "Feb 2017"
+output:
+html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Load and/or install needed packages
+```{r library_load, message=FALSE}
+library(pacman)
+pacman::p_load(reshape2, ggplot2, vegan, gtools, stats, superheat, RColorBrewer, Heatplus, gplots, corrplot, xlsx, Hmisc, igraph, network)
+```
+
+##Geochemistry overview:
+### melt geochem data for plotting
+```{r,fig.width=11,fig.height=11,message=FALSE}
+#setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+#geochem=read.table("SMB_geochem.txt",header=TRUE)
+#geochem2=melt(geochem,id.vars=c("Sample","Site","Type2","Type","cmbsf"),na.rm=FALSE)
+#write.table(geochem2,file="SMB_geochem_melt.txt",sep="\t")
+```
+
+### Santa Monica Basin Geochemistry by sampling site
+```{r site_col,fig.width=11,fig.height=11,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+geochem2=read.table("SMB_geochem2.txt",header=TRUE)
+ggplot(data=na.omit(geochem2),aes(x=value,y=cmbsf))+geom_point()+facet_grid(Site~variable,scales="free_x")+theme_bw()+scale_y_reverse()
+```
+
+### Santa Monica Basin Geochemistry color coded by environment type
+```{r envt_col,fig.width=11,fig.height=11,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+geochem2=read.table("SMB_geochem2.txt",header=TRUE)
+ggplot(data=na.omit(geochem2),aes(x=value,y=cmbsf,color=Type2))+geom_point()+facet_grid(Site~variable,scales="free_x")+theme_bw()+scale_y_reverse()
+```
+
+## OTU genera overview:
+### Santa Monica Basin, OTU genera with 2% abundance cutoff
+```{r all_genera,fig.width=30,fig.height=20,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+dataset1=read.table("SM2013_L6_w_meta2.txt",header=TRUE)
+#Set cut off for % abundance, currently set to 2% abundance in at least one sample
+cutoff=0.02
+dataset1_meta=dataset1[,1:5]
+row.names(dataset1_meta)=dataset1[,1]
+#Set order for samples (Be aware: ggplot is very literal. A1 is followed by A10 not A2. So, use: A001,...,A301)
+dataset1_meta$SN=factor(dataset1_meta$SN,levels=dataset1_meta$SN[order(dataset1_meta$Order)])
+#reduce OTU file by minimum OTU abundance threshold
+row.names(dataset1)=dataset1[,1]
+tagdata.1=dataset1[,-(1:5)]
+data_matrix1=tagdata.1/100
+maxab=apply(data_matrix1,2,max)
+n1=names(which(maxab>cutoff))
+data=data_matrix1[,which(names(data_matrix1) %in% n1)]
+#write.table(data,file="tagdata_more_than_x_percent.txt",sep="\t")
+data1=as.matrix(data)
+data1_meta=merge(data1,dataset1_meta,by="row.names")
+#melt dataframe
+data_new <- melt(data1_meta)
+data_new.1=data_new[,-1]
+names(data_new.1)=c("SN","Site","Order","Core","Type","OTU","value")
+#Plot data. With na.value=0, no circle is made if the OTU is absent in that sample.
+p1=ggplot(data_new.1, aes(x=SN, y=OTU)) +geom_point(aes(size=value,colour=Type,alpha=value))+scale_alpha(range=c(0.9,1),limits=c(1e-5,1),na.value=0)+theme(axis.text.x=element_text(angle=45,vjust=1,hjust=1,size=14))
+p1
+```
+
+### Santa Monica Basin, OTU genera (2% cutoff) core average overview
+```{r core_avg,fig.width=14,fig.height=8.5,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+dataset1=read.table("SM2013_core_avg_w_meta2.txt",header=TRUE)
+#Set cut off for % abundance, currently set to 2% abundance in at least one sample
+cutoff=0.02
+dataset1_meta=dataset1[,1:4]
+row.names(dataset1_meta)=dataset1[,1]
+#Set order for samples (Be aware: ggplot is very literal. A1 is followed by A10 not A2. So, use: A001,...,A301)
+dataset1_meta$Core=factor(dataset1_meta$Core,levels=dataset1_meta$Core[order(dataset1_meta$Order)])
+#reduce OTU file by minimum OTU abundance threshold
+row.names(dataset1)=dataset1[,1]
+tagdata.1=dataset1[,-(1:4)]
+data_matrix1=tagdata.1/100
+maxab=apply(data_matrix1,2,max)
+n1=names(which(maxab>cutoff))
+data=data_matrix1[,which(names(data_matrix1) %in% n1)]
+write.table(data,file="tagdata_more_than_x_percent.txt",sep="\t")
+data1=as.matrix(data)
+data1_meta=merge(data1,dataset1_meta,by="row.names")
+#melt dataframe
+data_new <- melt(data1_meta)
+data_new.1=data_new[,-1]
+names(data_new.1)=c("Core","Site","Order","Type","OTU","value")
+#plot data
+p2=ggplot(data_new.1, aes(x=Core, y=OTU))+geom_point(aes(size=value,colour=Type,alpha=value))+scale_alpha(range = c(0.9,1),limits=c(1e-5,1),na.value=0)+theme(axis.text.x=element_text(angle=45,vjust=1,hjust=1,size=10))
+p2
+```
+
+### Santa Monica Basin, OTU genera (2% cutoff) heatmap
+```{r OTU_heatmap,fig.width=30,fig.height=20,message=FALSE}
+#For more information: https://rlbarter.github.io/superheat/index.html
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+dataset1=read.table("SM2013_L6_w_meta2.txt",header=TRUE)
+meta1=read.table("SMB2013_L6all_meta.txt",header=TRUE)
+# This code assumes your data is a matrix oriented with samples in descending rows and OTUs in columns
+# If that's not the case, use the commented out code below to transpose the matrix
+# dataset1=t(dataset1)
+#Set cut off for % abundance, currently set to 2% abundance in at least one sample
+cutoff=0.02
+#If you want to set the order for samples (Be aware: ggplot is very literal. A1 is followed by A10 not A2. So, use: A001,...,A301)
+#dataset1$SN=factor(dataset1$SN,levels=dataset1$SN[order(dataset1$Order)])
+#reduce OTU file by minimum OTU abundance threshold
+row.names(dataset1)=dataset1[,1]
+tagdata.1=dataset1[,-(1:6)]
+data_matrix1=tagdata.1/100
+maxab=apply(data_matrix1,2,max)
+n1=names(which(maxab>cutoff))
+data=data_matrix1[,which(names(data_matrix1) %in% n1)]
+data_t=t(data)
+#Cluster data
+data.dist=vegdist(data_t,method="euclidean")
+row.clus=hclust(data.dist,"aver")
+data.dist.g=vegdist(t(data_t),method="euclidean")
+col.clus=hclust(data.dist.g,"aver")
+#plot heatmap
+#To add if you want gridlines: grid.hline.col="white",grid.hline.size=1,grid.vline.col="white",grid.vline.size=1
+superheat(data_t,left.label.text.size=2,left.label.text.alignment="right", force.bottom.label=TRUE, bottom.label.text.size=4, bottom.label.text.angle=90,scale=FALSE, membership.rows=row.clus$order, left.label="variable", membership.cols=col.clus$order, bottom.label="variable", heat.pal=c("blue", "white", "red"),yt=meta1$Type_num, yt.plot.type="bar")
+```
+
+### Santa Monica Basin, OTU genera core average (2% cutoff) heatmap
+```{r OTUavgg_heatmap,fig.width=35,fig.height=15,message=FALSE}
+#For more information: https://rlbarter.github.io/superheat/index.html
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+dataset1=read.table("SM2013_core_avg_w_meta2.txt",header=TRUE)
+meta1=read.table("SMB2013_L6avg_meta.txt",header=TRUE)
+# This code assumes your data is a matrix oriented with samples in descending rows and OTUs in columns
+# If that's not the case, use the commented out code below to transpose the matrix
+# dataset1=t(dataset1)
+#Set cut off for % abundance, currently set to 2% abundance in at least one sample
+cutoff=0.02
+#reduce OTU file by minimum OTU abundance threshold
+row.names(dataset1)=dataset1[,1]
+tagdata.1=dataset1[,-(1:6)]
+data_matrix1=tagdata.1/100
+maxab=apply(data_matrix1,2,max)
+n1=names(which(maxab>cutoff))
+data=data_matrix1[,which(names(data_matrix1) %in% n1)]
+data_t=t(data)
+#Cluster data
+data.dist=vegdist(data_t,method="euclidean")
+row.clus=hclust(data.dist,"aver")
+data.dist.g=vegdist(t(data_t),method="euclidean")
+col.clus=hclust(data.dist.g,"aver")
+#plot heatmap
+#To add if you want gridlines: grid.hline.col="white",grid.hline.size=1,grid.vline.col="white",grid.vline.size=1
+#yt=t(dataset1$Depth), yt.axis.name="Depth", yt.plot.type="scatter")
+superheat(data_t,left.label.text.size=3,left.label.text.alignment="right", force.bottom.label=TRUE, bottom.label.text.size=3, bottom.label.text.angle=90,scale=FALSE, membership.rows=row.clus$order, left.label="variable", membership.cols=col.clus$order, bottom.label="variable", heat.pal=c("blue", "white", "red"),yt=meta1$Type_num, yt.plot.type="bar")
+```
+
+## Proteomics overview:
+### Comparison of Consensus, De Novo, and Quantitative datasets
+#### Heatmap of consensus proteome gene ontology
+```{r consensus, fig.width=10,fig.height=8,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+data.consensus=read.table("SM2013_proteomeconsensus.txt",header=TRUE, row.names=1)
+
+#Cluster analysis with clustering of variables by sample
+# Other distance metrics include "euclidean", "manhattan","gower", "canberra","kulczynski,"morsita,"horn","binomial"
+
+data.dist=vegdist(data.consensus,method="euclidean")
+row.clus=hclust(data.dist,"aver")
+data.dist.g=vegdist(t(data.consensus),method="euclidean")
+col.clus=hclust(data.dist.g,"aver")
+
+# Generate a heatmap and dendrogram, with a yellow to red color scale change these colors as desired; the second color is for high values
+
+scaleyellowred=colorRampPalette(c("lightyellow","red"),space="rgb")(50)
+
+#Simple heatmap with dendrograms
+
+heatmap(as.matrix(data.consensus),Colv=as.dendrogram(col.clus),Rowv=NA,col=scaleyellowred,margins=c(20,7))
+```
+
+#### Heatmap of de novo proteome gene ontology
+```{r denovo, fig.width=10,fig.height=8,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+data.denovo=read.table("SM2013_proteomedenovo.txt",header=TRUE, row.names=1)
+
+#Cluster analysis with clustering of variables by sample
+# Other distance metrics include "euclidean", "manhattan","gower", "canberra","kulczynski,"morsita,"horn","binomial"
+
+data.dist=vegdist(data.denovo,method="euclidean")
+row.clus=hclust(data.dist,"aver")
+data.dist.g=vegdist(t(data.denovo),method="euclidean")
+col.clus=hclust(data.dist.g,"aver")
+
+# Generate a heatmap and dendrogram, with a yellow to red color scale change these colors as desired; the second color is for high values
+
+scaleyellowred=colorRampPalette(c("lightyellow","red"),space="rgb")(50)
+
+#Simple heatmap with dendrograms
+
+heatmap(as.matrix(data.denovo),Colv=as.dendrogram(col.clus),Rowv=NA,col=scaleyellowred,margins=c(20,7))
+```
+
+#### Heatmap of quantitative proteome gene ontology
+```{r quant, fig.width=10,fig.height=8,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+data.quant=read.table("SM2013_proteomequant.txt",header=TRUE, row.names=1)
+#Cluster analysis with clustering of variables by sample
+# Other distance metrics include "euclidean", "manhattan","gower", "canberra","kulczynski,"morsita,"horn","binomial"
+data.dist=vegdist(data.quant,method="euclidean")
+row.clus=hclust(data.dist,"aver")
+data.dist.g=vegdist(t(data.quant),method="euclidean")
+col.clus=hclust(data.dist.g,"aver")
+# Generate a heatmap and dendrogram, with a yellow to red color scale change these colors as desired; the second color is for high values
+scaleyellowred=colorRampPalette(c("lightyellow","red"),space="rgb")(50)
+#Simple heatmap with dendrograms
+heatmap(as.matrix(data.quant),Colv=as.dendrogram(col.clus),Rowv=NA,col=scaleyellowred,margins=c(20,7))
+```
+
+## Corelation Analysis 
+### OTU (L6, 2% cutoff) Pearson pairwise correlation in prep for network analysis
+```{r OTU_Corr, fig.width=30,fig.height=30,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+dataset1=read.table("SM2013_L6_w_meta2.txt",header=TRUE)
+#Set cut off for % abundance, currently set to 2% abundance in at least one sample
+cutoff=0.02
+dataset1_meta=dataset1[,1:6]
+row.names(dataset1_meta)=dataset1[,1]
+row.names(dataset1)=dataset1[,1]
+tagdata.1=dataset1[,-(1:6)]
+data_matrix1=tagdata.1/100
+maxab=apply(data_matrix1,2,max)
+#head(maxab)
+n1=names(which(maxab>cutoff))
+data=data_matrix1[,which(names(data_matrix1) %in% n1)]
+data1=as.matrix(data)
+#write.table(data,file=paste(Sys.time(),"tagdata_more_than_x_percent.txt",sep="\t")
+#correlation with pvalue pearson or spearman
+data.pearsoncor=rcorr(data1,type="pearson")
+pearson_pval=data.pearsoncor$P
+#write.table(data.pearsoncor$r,file="SM2013_pearsoncor.txt",sep="\t")
+#write.table(pearson_pval,file="SM2013_pearson_pval.txt",sep="\t")
+corrplot(data.pearsoncor$r, method="circle", type="upper", order="hclust", hclust.method="ward.D", diag=FALSE, p.mat=data.pearsoncor$P,insig="blank", tl.cex=1, tl.col="black", tl.srt=45)
+```
+
+### Converting correlation matrix into a network diagram
+```{r OTU_network, fig.width=30,fig.height=30,message=FALSE}
+# The above correlation analysis needs to be run first
+# Reshape matrices for cytoscape input and rbind p-values with corr coefficients
+# Final format will be:
+#   OTU1 OTU2  Pearson Pearson_pval  Spearman  Spearman_pval
+#   A1    A2    0.3     0.001         0.31      0.0015
+pearson_cor_tri=upper.tri(data.pearsoncor$r,diag=F)
+data.pearsoncor_copy=data.pearsoncor$r
+data.pearsoncor_copy[!pearson_cor_tri]=NA
+data.pearsoncor_melted=na.omit(melt(data.pearsoncor_copy,value.name="correlationCoef"))
+colnames(data.pearsoncor_melted)=c("OTU1","OTU2","Pearson")
+# write.csv(data.pearsoncor_melted,"data.pearsoncor_3col.txt")
+pearson_pval_tri=upper.tri(pearson_pval,diag=F)
+data.pearsoncor_copy2=pearson_pval
+data.pearsoncor_copy2[!pearson_pval_tri]=NA
+pearson_pval_melted=na.omit(melt(data.pearsoncor_copy2,value.name="pvalue"))
+colnames(pearson_pval_melted)=c("OTU1","OTU2","Pearson_pval")
+pearson_all=merge(data.pearsoncor_melted,pearson_pval_melted)
+# write.csv(pearson_all,"pearson_all_pval.txt")
+# subset data to include only pairings with p-val < 0.01
+pearson_all_sig=subset(pearson_all,pearson_all$Pearson_pval<0.01)
+# Output an excel file that can be used in cytoscape
+# Write.xlsx(pearson_all_sig,file="SM2013_corr_sig_pval_for_cytoscape.xlsx")
+# Now for converting the correlation file into an edge list and making a network
+# Pick a threshold for what pearson correlation level will be plotted, here it is Pearson>0.5
+pearson_highpos=subset(pearson_all_sig[,1:3],pearson_all_sig$Pearson>0.5)
+edges_highpos1=as.matrix(pearson_highpos[,1:3])
+net=graph_from_data_frame(edges_highpos1,directed=FALSE)
+V(net)$size=degree(net)
+E(net)$width=5*as.numeric(edges_highpos1[,3])
+plot.igraph(net, layout=layout.fruchterman.reingold, vertex.color="gray80", edge.color="darkorange")
+```
+---
