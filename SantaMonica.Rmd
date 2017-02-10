@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Load and/or install needed packages
 ```{r library_load, message=FALSE}
 library(pacman)
-pacman::p_load(reshape2, ggplot2, vegan, gtools, stats, superheat, RColorBrewer, Heatplus, gplots, corrplot, xlsx, Hmisc, igraph, network)
+pacman::p_load(reshape2, ggplot2, vegan, gtools, stats, superheat, RColorBrewer, Heatplus, gplots, corrplot, xlsx, Hmisc, igraph, network, plyr)
 ```
 
 ##Geochemistry overview:
@@ -253,6 +253,7 @@ corrplot(data.pearsoncor$r, method="circle", type="upper", order="hclust", hclus
 # Final format will be:
 #   OTU1 OTU2  Pearson Pearson_pval  Spearman  Spearman_pval
 #   A1    A2    0.3     0.001         0.31      0.0015
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
 pearson_cor_tri=upper.tri(data.pearsoncor$r,diag=F)
 data.pearsoncor_copy=data.pearsoncor$r
 data.pearsoncor_copy[!pearson_cor_tri]=NA
@@ -271,12 +272,33 @@ pearson_all_sig=subset(pearson_all,pearson_all$Pearson_pval<0.01)
 # Output an excel file that can be used in cytoscape
 # Write.xlsx(pearson_all_sig,file="SM2013_corr_sig_pval_for_cytoscape.xlsx")
 # Now for converting the correlation file into an edge list and making a network
-# Pick a threshold for what pearson correlation level will be plotted, here it is Pearson>0.5
+# For more info see: http://www.kateto.net/wp-content/uploads/2015/06/Polnet%202015%20Network%20Viz%20Tutorial%20-%20Ognyanova.pdf
+# Pick a threshold for what pearson correlation level will be plotted
 pearson_highpos=subset(pearson_all_sig[,1:3],pearson_all_sig$Pearson>0.5)
+#pearson_highpos1=pearson_highpos[,c(2,1,3)]
+#names(pearson_highpos1)=c("OTU1","OTU2","Pearson")
+#pearson_highpos2=rbind(pearson_highpos,pearson_highpos1)
 edges_highpos1=as.matrix(pearson_highpos[,1:3])
 net=graph_from_data_frame(edges_highpos1,directed=FALSE)
+# To color nodes by metabolism type, upload an additional file with that information
+# OTU1  Metabolism
+# Deltaproteobacteria Sulfate_Reduction
+nodes=read.table("SM2013_node_character.txt",header=TRUE)
+# Parse nodes list to include only those meeting the Pearson cutoff
+# !!! This new table with node metabolic characteristics needs to have all of the ';', '(', ')', and '-' are replaced with '.' !!!
+nodes_highpos=c(as.character(pearson_highpos$OTU1),as.character(pearson_highpos$OTU2))
+nodes_highpos=as.data.frame(nodes_highpos)
+nodes_highpos1=nodes_highpos[!duplicated(nodes_highpos),]
+nodes_highpos1=as.data.frame(nodes_highpos[!duplicated(nodes_highpos),])
+names(nodes_highpos1)=c("OTU1")
+#write.table(nodes_highpos1,file="nodes_highpos.txt",sep="\t")
+nodes2=nodes[order(nodes$OTU1),]
+nodes_highpos2=join(nodes_highpos1,nodes2,by="OTU1")
 V(net)$size=degree(net)
-E(net)$width=5*as.numeric(edges_highpos1[,3])
-plot.igraph(net, layout=layout.fruchterman.reingold, vertex.color="gray80", edge.color="darkorange")
+tol21rainbow=c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", "#77CCCC", "#117744", "#44AA77", "#88CCAA", "#777711", "#AAAA44", "#DDDD77", "#774411", "#AA7744", "#DDAA77", "#771122", "#AA4455", "#DD7788")
+colrs=tol21rainbow
+V(net)$color=colrs[nodes_highpos2$Metabolism]
+E(net)$width=10*as.numeric(edges_highpos1[,3])
+plot.igraph(net, layout=layout.fruchterman.reingold, edge.color="gray20")
 ```
 ---
