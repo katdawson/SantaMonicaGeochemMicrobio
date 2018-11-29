@@ -17,7 +17,7 @@ pacman::p_load(reshape2, ggplot2, vegan, gtools, stats, superheat, RColorBrewer,
 ##Data transformations:
 ### melt geochem data for plotting
 ```{r,fig.width=11,fig.height=11,message=FALSE}
-#setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+#setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 #geochem=read.table("SMB_geochem.txt",header=TRUE)
 #geochem2=melt(geochem,id.vars=c("Sample","Site","Type2","Type","cmbsf"),na.rm=FALSE)
 #write.table(geochem2,file="SMB_geochem_melt.txt",sep="\t")
@@ -25,7 +25,7 @@ pacman::p_load(reshape2, ggplot2, vegan, gtools, stats, superheat, RColorBrewer,
 
 ### melt S geochem data for plotting
 ```{r,fig.width=11,fig.height=11,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 #S_geochem=read.table("SMB_Sdata2.txt",header=TRUE)
 #S_geochem2=melt(S_geochem,id.vars=c("Sample","Site","Type2","cmbsf"),na.rm=FALSE)
 #write.table(S_geochem2,file="SMB_S_geochem2_melt.txt",sep="\t")
@@ -35,14 +35,14 @@ setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown 
 ```
 ### melt proteome data
 ```{r,fig.width=11,fig.height=11,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 #dn_prot=read.table("SMB_denovo_prot.txt",header=TRUE)
 #dn_prot2=melt(dn_prot,id.vars=c("Sample","Type2","cmbsf"),na.rm=FALSE)
 #write.table(dn_prot2,file="SMB_dn_prot_melt.txt",sep="\t")
 ```
 ### melt ANME SRB population data
 ```{r,fig.width=11,fig.height=11,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 #ANME_SRBpops=read.table("SMB_ANME_SRB_pops.txt",header=TRUE)
 #ANME_SRBpops2=melt(ANME_SRBpops,id.vars=c("Sample","Site","Type2","cmbsf","f_SO4"))
 #write.table(ANME_SRBpops2,file="SMB_ANME_SRBpops_melt.txt",sep="\t")
@@ -52,14 +52,14 @@ setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown 
 ## Geochemistry Overview:
 ### Santa Monica Basin Geochemistry by sampling site
 ```{r,fig.width=11,fig.height=11,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 geochem2=read.table("SMB_geochem2.txt",header=TRUE)
 ggplot(data=na.omit(geochem2),aes(x=value,y=cmbsf))+geom_point()+facet_grid(Site~variable,scales="free_x")+theme_bw()+scale_y_reverse()
 ```
 
 ### Santa Monica Basin Geochemistry color coded by environment type
 ```{r envt_col,fig.width=11,fig.height=11,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 geochem2=read.table("SMB_geochem_melt.txt",header=TRUE)
 geochem3=read.table("SMB_geochem_melt_siteH.txt",header=TRUE)
 p1=ggplot(data=na.omit(geochem2),aes(x=value,y=cmbsf,color=Type2, group=Core))+geom_point()+geom_path()+facet_grid(Site~variable,scales="free_x")+theme_bw()+scale_y_reverse()
@@ -71,7 +71,7 @@ ggsave(plot=p1,height=9,width=11,dpi=200,filename="SM_geochem_type_colored_all.p
 
 ### Santa Monica Basin Sulfur Geochemistry color coded by environment type
 ```{r envt_col,fig.width=11,fig.height=11,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 #S_geochem2=read.table("SMB_S_geochem2_melt.txt",header=TRUE)
 #ggplot(data=na.omit(S_geochem2),aes(x=value,y=cmbsf,color=Type2))+geom_point()+facet_grid(Site~variable,scales="free_x")+theme_bw()+scale_y_reverse()
 S_epsi=read.table("SMB_S_epsi_melt.txt",header=TRUE)
@@ -80,7 +80,7 @@ ggplot(data=na.omit(S_epsi),aes(x=fract_SO4,y=value,color=Type2))+geom_point()+f
 
 ### Santa Monica Basin ANME and SRB cluster populations coded by envt type, graphed agains fraction sulfate remaining
 ```{r pop_distrib,fig.width=11,fig.height=11,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 ANME_SRBpopsmelt=read.table("SMB_ANME_SRBpops_melt.txt",header=TRUE)
 p5=ggplot(data=na.omit(ANME_SRBpopsmelt),aes(x=value,y=f_SO4,color=Type2,group=Core))+geom_point()+geom_path()+facet_grid(Site~variable,scales="free_x")+theme_bw()
 ggsave(plot=p5,height=11,width=11,dpi=200,filename="SM_ANME_SRBpops_type_colored_all.pdf", useDingbats=FALSE)
@@ -88,7 +88,7 @@ ggsave(plot=p5,height=11,width=11,dpi=200,filename="SM_ANME_SRBpops_type_colored
 
 ### New plots from July 2017 d34S-HS vs fSO4, d13C-DIC vs DIC, color coded for ANME overlay
 ```{r new_geochem_plots,fig.width=11,fig.height=11,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 #Original melting of data before plotting
 #geochem4=read.table("SM2013_newdelta_productplots_2.txt",header=TRUE)
 #geochem4=read.table("SM2013_newdelta_productplots_2alt.txt",header=TRUE)
@@ -250,7 +250,7 @@ ggsave(plot=p20c,height=11,width=8,dpi=200,filename="SM_d13C_vDIC_SRB_compare3d.
 ### Santa Monica Basin Proteome depth plots color coded by environment
 ```{r envt_col,fig.width=11,fig.height=11,message=FALSE}
 #You need to melt the file first, and then edit output to remove the first column
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 #de novo proteome comparison
 dn_prot2=read.table("SMB_dn_prot_melt.txt",header=TRUE)
 prot_p1=ggplot(data=na.omit(dn_prot2),aes(x=value,y=cmbsf,color=Type2))+geom_point()+facet_grid(variable~Type2,scales="free_x")+theme_bw()+scale_y_reverse()
@@ -261,7 +261,7 @@ ggsave(plot=prot_p1,height=10,width=5,dpi=200,filename="SM_denovoprot_siteH.pdf"
 ## OTU genera overview:
 ### Santa Monica Basin, OTU genera with 2% abundance cutoff
 ```{r all_genera,fig.width=30,fig.height=20,message=FALSE}
-setwd("C:/Users/kryto/Desktop/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 #dataset file should have the following format:
 #SN   Site  Order  Core  Type2  OTU1  OTU2 ... OTU100
 #2000 A     A001   PC1   Clam   1.01  20.3     0.03
@@ -306,7 +306,7 @@ write.table(data_new.1,"SM2013_tagL6_2percent.txt",sep="\t")
 ```
 ### Santa Monica Basin, SIMPER run above first, the final file is needed
 ```{r simper,fig.width=30,fig.height=20,message=FALSE}
-setwd("C:/Users/kryto/Desktop/Manuscripts/Santa Monica basin/R/R markdown file/Core SIMPER composition similarity")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 #SIMPER analysis of OTUs driving site and core differences
 metadata=read.table("meta.txt",header=TRUE)
 meta=dataset1_meta[,2]
@@ -331,11 +331,6 @@ corrplot1=corrplot(simp_corr2,method="shade",order="hclust",hclust.method="ward.
 dev.off()
 cprrplot2=corrplot(simp_corr2,method="shade",order="hclust",hclust.method="ward.D",col=col2(500),cl.lim=c(0,1),addrect=5,rect.col="black")
 
-# heatmap of OTUs important to core and site differences
-# from http://www.molecularecologist.com/2013/08/making-heatmaps-with-r-for-microbiome-analysis/
-# this function generates a heatmap and cluster analysis from tag squence data
-#samples should be in the first column and species/taxa in the first row. It easiest to invert the tables in excel
-
 simper_otu_core_diff=read.table("SMB_simper_cores_OTU_matrix.txt",header=TRUE)
 row.names(simper_otu_core_diff)=simper_otu_core_diff$Taxa
 socd.1=simper_otu_core_diff[,-1]
@@ -358,7 +353,7 @@ heatmap_cores=heatmap(as.matrix(data.prop.1),Rowv=as.dendrogram(row.clus),Colv=a
 
 ### Unifrac analysis of iTAG data
 ```{r unifrac,fig.width=30,fig.height=20,message=FALSE}
-setwd("C:/Users/kryto/Desktop/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 
 library(phyloseq)
 library(doParallel)
@@ -401,7 +396,7 @@ plot_bar(physeq,fill="Family")
 
 ### Santa Monica Basin, Denovo OTU with 2% abundance cutoff
 ```{r denovo,fig.width=40,fig.height=20,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 #metadata
 dataset1_meta=read.table("SMB_meta.txt",header=TRUE)
 row.names(dataset1_meta)=dataset1_meta[,1]
@@ -434,7 +429,7 @@ pdenovo
 
 ### Santa Monica Basin, OTU genera (2% cutoff) core average overview
 ```{r core_avg,fig.width=14,fig.height=8.5,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 dataset1=read.table("SM2013_core_avg_w_meta2.txt",header=TRUE)
 #Set cut off for % abundance, currently set to 2% abundance in at least one sample
 cutoff=0.02
@@ -463,7 +458,7 @@ p2
 
 ### Santa Monica Basin, OTU genera (2% cutoff) heatmap, annotated annHeatmap2
 ```{r OTU_heatmap,fig.width=30,fig.height=20,message=FALSE}
-setwd("C:/Users/kryto/Desktop/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 dataset1=read.table("SM2013_L6_w_meta2.txt",header=TRUE)
 #Data set with only two B cores included (PC80 and PC67)
 dataset1=read.table("SM2013_L6_w_meta3.txt",header=TRUE)
@@ -504,7 +499,7 @@ plot(annHeatmap2(as.matrix(data),col=colorRampPalette(c("lightyellow","red"),spa
 ### Santa Monica Basin, OTU genera core average (2% cutoff) heatmap, Superheat
 ```{r OTUavgg_heatmap,fig.width=35,fig.height=15,message=FALSE}
 #For more information: https://rlbarter.github.io/superheat/index.html
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 dataset1=read.table("SM2013_core_avg_w_meta2.txt",header=TRUE)
 meta1=read.table("SMB2013_L6avg_meta.txt",header=TRUE)
 # This code assumes your data is a matrix oriented with samples in descending rows and OTUs in columns
@@ -536,7 +531,7 @@ superheat(data_t,left.label.text.size=3,left.label.text.alignment="right", force
 ## Proteomics overview:
 ### SM Proteome updated plots May 2018
 ```{r dn_envt_col,fig.width=8,fig.height=10,message=FALSE}
-setwd("C:/Users/kryto/Desktop/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 tol52col=c("#023fa5", "#7d87b9", "#bec1d4", "#d6bcc0", "#bb7784", "#8e063b", "#4a6fe3", "#8595e1", "#b5bbe3", "#e6afb9", "#e07b91", "#d33f6a", "#11c638", "#8dd593", "#c6dec7", "#ead3c6", "#f0b98d", "#ef9708", "#0fcfc0", "#9cded6", "#d5eae7", "#f3e1eb", "#f6c4e1", "#f79cd4","#023fa5", "#7d87b9", "#bec1d4", "#d6bcc0", "#bb7784", "#8e063b", "#4a6fe3", "#8595e1", "#b5bbe3", "#e6afb9", "#e07b91", "#d33f6a", "#11c638", "#8dd593", "#c6dec7", "#ead3c6", "#f0b98d", "#ef9708", "#0fcfc0", "#9cded6", "#d5eae7", "#f3e1eb", "#f6c4e1", "#f79cd4")
 #dn_mat_prot=read.table("SMB_dn_prot_mat.txt",header=TRUE)
 #dn_mat_prot2=melt(dn_mat_prot,id.vars=c("SN","Type","Depth"),na.rm=FALSE)
@@ -580,7 +575,7 @@ ggsave(plot=dn_plot_10,height=4,width=5,dpi=200,filename="SM_dn_C_clam_fxn_may20
 ### Comparison of Consensus, De Novo, and Quantitative datasets
 #### matrixplot proteome/geochem data
 ```{r,fig.width=11,fig.height=11,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 #load ggplot_smooth_func for adding R^2 and equations, for details see https://gist.github.com/kdauria/524eade46135f6348140
 source('~/R/win-library/3.4/ggplot_smooth_func.R')
 
@@ -616,7 +611,7 @@ ggsave(plot=p34,height=15,width=15,dpi=200,filename="SM_geochem_dnprot_siteH_v2.
 
 #### Abundance plots de novo and quantitative proteome relative abundance
 ```{r,fig.width=5,fig.height=10,message=FALSE}
-setwd("C:/Users/kryto/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 #dn_q_prot=read.table("SMB_denovo_quant_prot.txt",header=TRUE)
 #dn_q_prot2=melt(dn_q_prot,id.vars=c("Sample","Type2","cmbsf"),na.rm=FALSE)
 #write.table(dn_q_prot2,file="SMB_dn_q_prot_melt.txt",sep="\t")
@@ -631,7 +626,7 @@ ggsave(plot=dn_q_prot_p2,height=10,width=5,dpi=200,filename="SM_denovoquantprot_
 
 #### Heatmap of consensus proteome gene ontology
 ```{r consensus, fig.width=10,fig.height=8,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 data.consensus=read.table("SM2013_proteomeconsensus.txt",header=TRUE, row.names=1)
 
 #Cluster analysis with clustering of variables by sample
@@ -653,7 +648,7 @@ heatmap(as.matrix(data.consensus),Colv=as.dendrogram(col.clus),Rowv=NA,col=scale
 
 #### Heatmap of de novo proteome gene ontology
 ```{r denovo, fig.width=10,fig.height=8,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 data.denovo=read.table("SM2013_proteomedenovo.txt",header=TRUE, row.names=1)
 
 #Cluster analysis with clustering of variables by sample
@@ -675,7 +670,7 @@ heatmap(as.matrix(data.denovo),Colv=as.dendrogram(col.clus),Rowv=NA,col=scaleyel
 
 #### Heatmap of quantitative proteome gene ontology
 ```{r quant, fig.width=10,fig.height=8,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 data.quant=read.table("SM2013_proteomequant.txt",header=TRUE, row.names=1)
 #Cluster analysis with clustering of variables by sample
 # Other distance metrics include "euclidean", "manhattan","gower", "canberra","kulczynski,"morsita,"horn","binomial"
@@ -691,10 +686,10 @@ heatmap(as.matrix(data.quant),Colv=as.dendrogram(col.clus),Rowv=NA,col=scaleyell
 
 
 
-## Corelation Analysis 
+## Corelation and Network Analysis 
 ### OTU (L6, 2% cutoff) Pearson pairwise correlation in prep for network analysis
 ```{r OTU_Corr, fig.width=30,fig.height=30,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 dataset1=read.table("SM2013_L6_w_meta2.txt",header=TRUE)
 #Set cut off for % abundance, currently set to 2% abundance in at least one sample
 cutoff=0.02
@@ -770,7 +765,7 @@ ggsave(plot=SM2013_ggnet,height=15,width=35,dpi=200,filename="SM2013_ggnet_L6_2p
 ```
 ### Corelation of Geochemistry/Tag data all sites (L6 and geochem 2% cutoff)
 ```{r OTU_Corr_all, fig.width=30,fig.height=30,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 #for_corr_all=read.table("SM2013_corr_all_oct2017.txt",header=TRUE,row.names=1)
 #site H
 for_corr_all=read.table("siteH_L6_forcorr.txt",header=TRUE,row.names=1)
@@ -787,7 +782,7 @@ corrplot_all=corrplot(all_pearsoncorr$r, method="circle", p.mat=all_pearsoncorr$
 ```
 ### Converting the above correlation matrix into a network diagram and bipartite network of Geochemistry/Tag data all sites (L6 and geochem 2% cutoff)
 ```{r OTU_Corr_all, fig.width=30,fig.height=30,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 # The above correlation analysis needs to be run first
 
 #21 color palette
@@ -876,7 +871,7 @@ ggsave(plot=SM2013_all_ggnet,height=15,width=35,dpi=200,filename="SM2013_all_ggn
 
 ### Corelation of Proteome/Geochemistry/Tag data for Site H
 ```{r OTU_Corr_siteH, fig.width=30,fig.height=30,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 
 #chem and quant proteome (this is both the clam bed and orange mat cores)
 for_corr_prot_chem=read.table("quant_prot_geochem_forcorr.txt",header=TRUE,row.names=1)
