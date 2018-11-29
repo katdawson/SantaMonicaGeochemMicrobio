@@ -18,7 +18,7 @@ pacman::p_load(reshape2, ggplot2, vegan, gtools, stats, superheat, RColorBrewer,
 ##Geochemistry overview:
 ### melt geochem data for plotting
 ```{r,fig.width=11,fig.height=11,message=FALSE}
-#setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 #geochem=read.table("SMB_geochem.txt",header=TRUE)
 #geochem2=melt(geochem,id.vars=c("Sample","Site","Type2","Type","cmbsf"),na.rm=FALSE)
 #write.table(geochem2,file="SMB_geochem_melt.txt",sep="\t")
@@ -26,14 +26,14 @@ pacman::p_load(reshape2, ggplot2, vegan, gtools, stats, superheat, RColorBrewer,
 
 ### Santa Monica Basin Geochemistry by sampling site
 ```{r site_col,fig.width=11,fig.height=11,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 geochem2=read.table("SMB_geochem2.txt",header=TRUE)
 ggplot(data=na.omit(geochem2),aes(x=value,y=cmbsf))+geom_point()+facet_grid(Site~variable,scales="free_x")+theme_bw()+scale_y_reverse()
 ```
 
 ### Santa Monica Basin Geochemistry color coded by environment type
 ```{r envt_col,fig.width=11,fig.height=11,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 geochem2=read.table("SMB_geochem2.txt",header=TRUE)
 ggplot(data=na.omit(geochem2),aes(x=value,y=cmbsf,color=Type2))+geom_point()+facet_grid(Site~variable,scales="free_x")+theme_bw()+scale_y_reverse()
 ```
@@ -41,7 +41,7 @@ ggplot(data=na.omit(geochem2),aes(x=value,y=cmbsf,color=Type2))+geom_point()+fac
 ## OTU genera overview:
 ### Santa Monica Basin, OTU genera with 2% abundance cutoff
 ```{r all_genera,fig.width=30,fig.height=20,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 dataset1=read.table("SM2013_L6_w_meta2.txt",header=TRUE)
 #Set cut off for % abundance, currently set to 2% abundance in at least one sample
 cutoff=0.02
@@ -70,7 +70,7 @@ p1
 
 ### Santa Monica Basin, OTU genera (2% cutoff) core average overview
 ```{r core_avg,fig.width=14,fig.height=8.5,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 dataset1=read.table("SM2013_core_avg_w_meta2.txt",header=TRUE)
 #Set cut off for % abundance, currently set to 2% abundance in at least one sample
 cutoff=0.02
@@ -100,7 +100,7 @@ p2
 ### Santa Monica Basin, OTU genera (2% cutoff) heatmap
 ```{r OTU_heatmap,fig.width=30,fig.height=20,message=FALSE}
 #For more information: https://rlbarter.github.io/superheat/index.html
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 dataset1=read.table("SM2013_L6_w_meta2.txt",header=TRUE)
 meta1=read.table("SMB2013_L6all_meta.txt",header=TRUE)
 # This code assumes your data is a matrix oriented with samples in descending rows and OTUs in columns
@@ -131,7 +131,7 @@ superheat(data_t,left.label.text.size=2,left.label.text.alignment="right", force
 ### Santa Monica Basin, OTU genera core average (2% cutoff) heatmap
 ```{r OTUavgg_heatmap,fig.width=35,fig.height=15,message=FALSE}
 #For more information: https://rlbarter.github.io/superheat/index.html
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 dataset1=read.table("SM2013_core_avg_w_meta2.txt",header=TRUE)
 meta1=read.table("SMB2013_L6avg_meta.txt",header=TRUE)
 # This code assumes your data is a matrix oriented with samples in descending rows and OTUs in columns
@@ -162,7 +162,7 @@ superheat(data_t,left.label.text.size=3,left.label.text.alignment="right", force
 ### Comparison of Consensus, De Novo, and Quantitative datasets
 #### Heatmap of consensus proteome gene ontology
 ```{r consensus, fig.width=10,fig.height=8,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 data.consensus=read.table("SM2013_proteomeconsensus.txt",header=TRUE, row.names=1)
 
 #Cluster analysis with clustering of variables by sample
@@ -184,7 +184,7 @@ heatmap(as.matrix(data.consensus),Colv=as.dendrogram(col.clus),Rowv=NA,col=scale
 
 #### Heatmap of de novo proteome gene ontology
 ```{r denovo, fig.width=10,fig.height=8,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 data.denovo=read.table("SM2013_proteomedenovo.txt",header=TRUE, row.names=1)
 
 #Cluster analysis with clustering of variables by sample
@@ -206,7 +206,7 @@ heatmap(as.matrix(data.denovo),Colv=as.dendrogram(col.clus),Rowv=NA,col=scaleyel
 
 #### Heatmap of quantitative proteome gene ontology
 ```{r quant, fig.width=10,fig.height=8,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 data.quant=read.table("SM2013_proteomequant.txt",header=TRUE, row.names=1)
 #Cluster analysis with clustering of variables by sample
 # Other distance metrics include "euclidean", "manhattan","gower", "canberra","kulczynski,"morsita,"horn","binomial"
@@ -223,7 +223,7 @@ heatmap(as.matrix(data.quant),Colv=as.dendrogram(col.clus),Rowv=NA,col=scaleyell
 ## Corelation Analysis 
 ### OTU (L6, 2% cutoff) Pearson pairwise correlation in prep for network analysis
 ```{r OTU_Corr, fig.width=30,fig.height=30,message=FALSE}
-setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+setwd("C:/Users/YourName/Desktop/Folder/Folder/Folder")
 dataset1=read.table("SM2013_L6_w_meta2.txt",header=TRUE)
 #Set cut off for % abundance, currently set to 2% abundance in at least one sample
 cutoff=0.02
