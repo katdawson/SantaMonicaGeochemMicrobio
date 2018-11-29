@@ -1,0 +1,956 @@
+  ---
+title: Integrating molecular biology and geochemical tools to explore sulfur and methane
+  metabolism in the Santa Monica Basin, CA
+author: "Kat Dawson"
+date: "December 2018"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## Load and/or install needed packages, install pacman first
+```{r library_load, message=FALSE}
+library(pacman)
+pacman::p_load(reshape2, ggplot2, vegan, gtools, stats, superheat, RColorBrewer, Heatplus, gplots, corrplot, xlsx, igraph, Hmisc, GGally, network, plyr, ggpubr, grid, gridExtra,lattice,circlize, viridis, Heatplus, stats)
+```
+
+##Data transformations:
+### melt geochem data for plotting
+```{r,fig.width=11,fig.height=11,message=FALSE}
+#setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+#geochem=read.table("SMB_geochem.txt",header=TRUE)
+#geochem2=melt(geochem,id.vars=c("Sample","Site","Type2","Type","cmbsf"),na.rm=FALSE)
+#write.table(geochem2,file="SMB_geochem_melt.txt",sep="\t")
+```
+
+### melt S geochem data for plotting
+```{r,fig.width=11,fig.height=11,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+#S_geochem=read.table("SMB_Sdata2.txt",header=TRUE)
+#S_geochem2=melt(S_geochem,id.vars=c("Sample","Site","Type2","cmbsf"),na.rm=FALSE)
+#write.table(S_geochem2,file="SMB_S_geochem2_melt.txt",sep="\t")
+#S_epsi=read.table("SMB_Sepsi_data.txt",header=TRUE)
+#S_epsi2=melt(S_epsi,id.vars=c("Sample","Site","Type2","fract_SO4"),na.rm=FALSE)
+#write.table(S_epsi2,file="SMB_S_epsi_melt.txt",sep="\t")
+```
+### melt proteome data
+```{r,fig.width=11,fig.height=11,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+#dn_prot=read.table("SMB_denovo_prot.txt",header=TRUE)
+#dn_prot2=melt(dn_prot,id.vars=c("Sample","Type2","cmbsf"),na.rm=FALSE)
+#write.table(dn_prot2,file="SMB_dn_prot_melt.txt",sep="\t")
+```
+### melt ANME SRB population data
+```{r,fig.width=11,fig.height=11,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+#ANME_SRBpops=read.table("SMB_ANME_SRB_pops.txt",header=TRUE)
+#ANME_SRBpops2=melt(ANME_SRBpops,id.vars=c("Sample","Site","Type2","cmbsf","f_SO4"))
+#write.table(ANME_SRBpops2,file="SMB_ANME_SRBpops_melt.txt",sep="\t")
+```
+
+
+## Geochemistry Overview:
+### Santa Monica Basin Geochemistry by sampling site
+```{r,fig.width=11,fig.height=11,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+geochem2=read.table("SMB_geochem2.txt",header=TRUE)
+ggplot(data=na.omit(geochem2),aes(x=value,y=cmbsf))+geom_point()+facet_grid(Site~variable,scales="free_x")+theme_bw()+scale_y_reverse()
+```
+
+### Santa Monica Basin Geochemistry color coded by environment type
+```{r envt_col,fig.width=11,fig.height=11,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+geochem2=read.table("SMB_geochem_melt.txt",header=TRUE)
+geochem3=read.table("SMB_geochem_melt_siteH.txt",header=TRUE)
+p1=ggplot(data=na.omit(geochem2),aes(x=value,y=cmbsf,color=Type2, group=Core))+geom_point()+geom_path()+facet_grid(Site~variable,scales="free_x")+theme_bw()+scale_y_reverse()
+ggsave(plot=p1,height=9,width=11,dpi=200,filename="SM_geochem_type_colored_all.pdf", useDingbats=FALSE)
+#For site H exclusively
+#p2=ggplot(data=na.omit(geochem3),aes(x=value,y=cmbsf,color=Type2, group=Core))+geom_point()+geom_path()+facet_grid(Site~variable,scales="free_x")+theme_bw()+scale_y_reverse()
+#ggsave(plot=p2,height=5,width=10,dpi=200,filename="SM_geochem_siteH_type_colored_all.pdf", useDingbats=FALSE)
+```
+
+### Santa Monica Basin Sulfur Geochemistry color coded by environment type
+```{r envt_col,fig.width=11,fig.height=11,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+#S_geochem2=read.table("SMB_S_geochem2_melt.txt",header=TRUE)
+#ggplot(data=na.omit(S_geochem2),aes(x=value,y=cmbsf,color=Type2))+geom_point()+facet_grid(Site~variable,scales="free_x")+theme_bw()+scale_y_reverse()
+S_epsi=read.table("SMB_S_epsi_melt.txt",header=TRUE)
+ggplot(data=na.omit(S_epsi),aes(x=fract_SO4,y=value,color=Type2))+geom_point()+facet_grid(Site~variable,scales="free_x")+theme_bw()
+```
+
+### Santa Monica Basin ANME and SRB cluster populations coded by envt type, graphed agains fraction sulfate remaining
+```{r pop_distrib,fig.width=11,fig.height=11,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+ANME_SRBpopsmelt=read.table("SMB_ANME_SRBpops_melt.txt",header=TRUE)
+p5=ggplot(data=na.omit(ANME_SRBpopsmelt),aes(x=value,y=f_SO4,color=Type2,group=Core))+geom_point()+geom_path()+facet_grid(Site~variable,scales="free_x")+theme_bw()
+ggsave(plot=p5,height=11,width=11,dpi=200,filename="SM_ANME_SRBpops_type_colored_all.pdf", useDingbats=FALSE)
+```
+
+### New plots from July 2017 d34S-HS vs fSO4, d13C-DIC vs DIC, color coded for ANME overlay
+```{r new_geochem_plots,fig.width=11,fig.height=11,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+#Original melting of data before plotting
+#geochem4=read.table("SM2013_newdelta_productplots_2.txt",header=TRUE)
+#geochem4=read.table("SM2013_newdelta_productplots_2alt.txt",header=TRUE)
+#geochem4b=melt(geochem4,id.vars=c("Sample","Site","cmbsf","Type2","d13C","DIC","fract_SO4","d34S_HS","d34S_SO4","E_SO4_HS_film"),na.rm=FALSE)
+#write.table(geochem4b,file="SM2013_newdelta_productplots_2_melt.txt",sep="\t")
+#geochem5=read.table("SM2013_newdelta_productplots_4.txt",header=TRUE)
+#geochem5b=melt(geochem5,id.vars=c("Sample","Site","cmbsf","Type2","d13C","DIC","fract_SO4","d34S_HS","d34S_SO4","E_SO4_HS_film"),na.rm=FALSE)
+#write.table(geochem5b,file="SM2013_newdelta_productplots_4_melt.txt",sep="\t")
+
+#alternative pallete, this one is color blind friendly
+cbbPalette=c("#000000", "#56B4E9", "#E69F00", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+cbbPalette2=c("#000000", "#66CCFF", "#E69F00", "#F0E442", "#0072B2", "#CC79A7")
+
+#ANME population data file
+#With Site J
+#geochem4b=read.table("SM2013_newdelta_productplots_2_melt.txt",header=TRUE)
+#Without Site J
+#geochem4b=read.table("SM2013_newdelta_productplots_2_meltb.txt",header=TRUE)
+geochem4c=read.table("SM2013_newdelta_productplots_2_meltc.txt",header=TRUE)
+
+#SRB population data file
+#With Site J
+#geochem5b=read.table("SM2013_newdelta_productplots_4_melt.txt",header=TRUE)
+#Without Site J
+geochem5b=read.table("SM2013_newdelta_productplots_4_meltb.txt",header=TRUE)
+
+#??34S plots by environment type and site plots
+#ANME
+p5=ggplot(data=geochem4c,aes(x=fract_SO4,y=d34S_HS,color=variable,size=value,alpha=value, order=as.numeric(-geochem4c$value)))+scale_alpha(range=c(0.99,1),limits=c(0.001,100),na.value=0)+geom_point(aes(fill=variable),color="black",pch=21,stroke=0.1)+scale_fill_manual(values=cbbPalette)+facet_wrap(Site~Type2, ncol=4, nrow=3, drop=TRUE)+theme_bw()+scale_x_reverse()+theme(legend.position="bottom")
+p5g=ggplot_gtable(ggplot_build(p5))
+#ggsave(plot=p5,height=10,width=8,dpi=200,filename="SM_d34SHS_v_fSO4_byANME.pdf",useDingbats=FALSE)
+
+#SRB
+p6=ggplot(data=geochem5b,aes(x=fract_SO4,y=d34S_HS,color=variable,size=value,alpha=value, order=as.numeric(-geochem5b$value)))+scale_alpha(range=c(0.99,1),limits=c(0.001,100),na.value=0)+geom_point(aes(fill=variable),color="black",pch=21,stroke=0.1)+scale_fill_manual(values=cbbPalette2)+facet_wrap(Site~Type2, ncol=4, nrow=3, drop=TRUE)+theme_bw()+scale_x_reverse()+theme(legend.position="bottom")
+p6g=ggplot_gtable(ggplot_build(p6))
+#ggsave(plot=p6,height=8,width=6,dpi=200,filename="SM_d34SHS_v_fSO4_bySRB.pdf",useDingbats=FALSE)
+
+#??34S plots by site only plots
+#ANME
+#p5alt=ggplot(data=geochem4b,aes(x=fract_SO4,y=d34S_HS,color=variable,size=value,alpha=value, order=as.numeric(-geochem4b$value)))+scale_alpha(range=c(0.99,1),limits=c(0.001,100),na.value=0)+geom_point(aes(fill=variable),color="black", pch=21,stroke=0.1)+scale_fill_manual(values=cbbPalette)+facet_wrap(~Site,ncol=5)+theme_bw()
+#ggsave(plot=p5alt,height=8,width=6,dpi=200,filename="SM_d34SHS_v_fSO4_byANMEalt.pdf",useDingbats=FALSE)#SRB
+
+#SRB
+#p6alt=ggplot(data=geochem5b,aes(x=fract_SO4,y=d34S_HS,color=variable,size=value,alpha=value, order=as.numeric(-geochem5b$value)))+scale_alpha(range=c(0.99,1),limits=c(0.001,100),na.value=0)+geom_point(aes(fill=variable),color="black", pch=21,stroke=0.1)+scale_fill_manual(values=cbbPalette)+facet_wrap(~Site,ncol=5)+theme_bw()
+#ggsave(plot=p6alt,height=8,width=6,dpi=200,filename="SM_d34SHS_v_fSO4_bySRBalt.pdf",useDingbats=FALSE)
+
+#Just the plot no facet grid/sizing/coloring
+#??34S v fSO4
+p7=ggplot(data=geochem5b,aes(x=fract_SO4,y=d34S_HS))+geom_point()+theme_bw()+scale_x_reverse()
+p7g=ggplot_gtable(ggplot_build(p7))
+#ggsave(plot=p7,height=5,width=4,dpi=200,filename="SM_d34SHS_v_fSO4_all2.pdf",useDingbats=FALSE)
+
+#d34S v depth
+p7b=ggplot(data=geochem5b,aes(x=cmbsf,y=d34S_HS))+geom_point()+theme_bw()
+p7bg=ggplot_gtable(ggplot_build(p7b))
+#ggsave(plot=p7b,height=5,width=4,dpi=200,filename="SM_d34SHS_v_depth_all.pdf",useDingbats=FALSE)
+
+#??13C v [DIC]
+p8=ggplot(data=geochem5b,aes(x=DIC,y=d13C))+geom_point()+theme_bw()
+p8g=ggplot_gtable(ggplot_build(p8))
+#ggsave(plot=p8,height=5,width=4,dpi=200,filename="SM_d13C_v_DIC_all.pdf",useDingbats=FALSE)
+
+#??13C v depth
+p8b=ggplot(data=geochem5b,aes(x=cmbsf,y=d13C))+geom_point()+theme_bw()
+p8bg=ggplot_gtable(ggplot_build(p8b))
+#ggsave(plot=p8b,height=5,width=4,dpi=200,filename="SM_d13C_v_DIC_all.pdf",useDingbats=FALSE)
+
+#??13C v fSO4
+p8c=ggplot(data=geochem5b,aes(x=fract_SO4,y=d13C))+geom_point()+theme_bw()+scale_x_reverse()
+p8cg=ggplot_gtable(ggplot_build(p8c))
+#ggsave(plot=p8b,height=5,width=4,dpi=200,filename="SM_d13C_v_fSO4_all2.pdf",useDingbats=FALSE)
+
+
+#Same plots showing relationship of ??13C-DIC to [DIC] or fSO4
+#ANME
+#p9=ggplot(data=geochem4c,aes(x=fract_SO4,y=d13C,color=variable,size=value,alpha=value, order=as.numeric(-geochem4c$value)))+scale_alpha(range=c(0.99,1),limits=c(0.001,100),na.value=0)+geom_point(aes(fill=variable),color="black", pch=21,stroke=0.1)+scale_fill_manual(values=cbbPalette)+facet_grid(Site~Type2)+theme_bw()+scale_x_reverse()
+#ggsave(plot=p9,height=10,width=8,dpi=200,filename="SM_d13C_v_fSO4_byANME2.pdf",useDingbats=FALSE)
+
+#p9alt=ggplot(data=geochem4b,aes(x=DIC,y=d13C,color=variable,size=value,alpha=value, order=as.numeric(-geochem4b$value)))+scale_alpha(range=c(0.99,1),limits=c(0.001,100),na.value=0)+geom_point(aes(fill=variable),color="black", pch=21,stroke=0.1)+scale_fill_manual(values=cbbPalette)+facet_wrap(~Site,ncol=5)+theme_bw()
+#ggsave(plot=p9alt,height=8,width=6,dpi=200,filename="SM_d13C_v_DIC_byANME.pdf",useDingbats=FALSE)
+
+p9alt2=ggplot(data=geochem4c,aes(x=DIC,y=d13C,color=variable,size=value,alpha=value, order=as.numeric(-geochem4c$value)))+scale_alpha(range=c(0.99,1),limits=c(0.001,100),na.value=0)+geom_point(aes(fill=variable),color="black",pch=21,stroke=0.1)+scale_fill_manual(values=cbbPalette)+facet_wrap(Site~Type2, ncol=4, nrow=3, drop=TRUE)+theme_bw()+theme(legend.position="bottom")
+p9alt2g=ggplot_gtable(ggplot_build(p9alt2))
+#ggsave(plot=p9alt2,height=8,width=6,dpi=200,filename="SM_d13C_v_DIC_byANME.pdf",useDingbats=FALSE)
+
+#SRB
+#p10=ggplot(data=geochem5b,aes(x=fract_SO4,y=d13C,color=variable,size=value,alpha=value, order=as.numeric(-geochem5b$value)))+scale_alpha(range=c(0.99,1),limits=c(0.001,100),na.value=0)+geom_point(aes(fill=variable),color="black", pch=21,stroke=0.1)+scale_fill_manual(values=cbbPalette)+facet_grid(Site~Type2)+theme_bw()+scale_x_reverse()
+#ggsave(plot=p10,height=8,width=6,dpi=200,filename="SM_d13C_v_fSO4_bySRB.pdf",useDingbats=FALSE)
+
+#p10alt=ggplot(data=geochem5c,aes(x=DIc,y=d13C,color=variable,size=value,alpha=value, order=as.numeric(-geochem5c$value)))+scale_alpha(range=c(0.99,1),limits=c(0.001,100),na.value=0)+geom_point(aes(fill=variable),color="black", pch=21,stroke=0.1)+scale_fill_manual(values=cbbPalette)+facet_wrap(~Site,ncol=5)+theme_bw()
+#ggsave(plot=p10alt,height=8,width=6,dpi=200,filename="SM_d13C_v_DIC_bySRB.pdf",useDingbats=FALSE)
+
+p10alt2=ggplot(data=geochem5b,aes(x=DIC,y=d13C,color=variable,size=value,alpha=value, order=as.numeric(-geochem5b$value)))+scale_alpha(range=c(0.99,1),limits=c(0.001,100),na.value=0)+geom_point(aes(fill=variable),color="black",pch=21,stroke=0.1)+scale_fill_manual(values=cbbPalette2)+facet_wrap(Site~Type2, ncol=4, nrow=3, drop=TRUE)+theme_bw()+theme(legend.position="bottom")
+p10alt2g=ggplot_gtable(ggplot_build(p10alt2))
+#ggsave(plot=p10alt2,height=8,width=6,dpi=200,filename="SM_d13C_v_DIC_bySRBalt.pdf",useDingbats=FALSE)
+
+# Plots arranged nicely for figures
+#Make a blank box for spacing
+blank=rectGrob(gp=gpar(col="white"))
+
+#p11=ggarrange(p7,p8,labels=c("A","B"), ncol=2)
+#ggsave(plot=p11,height=4,width=8,dpi=200,filename="SM_d13C_d34S_vfSO4_all.pdf",useDingbats=FALSE)
+
+#p12=ggarrange(plot=p6alt,p9,labels=c("C","D"),ncol=2,common.legend=TRUE,legend="bottom")
+#ggsave(plot=p12,height=8,width=8,dpi=200,filename="SM_d13C_d34S_vfSO4_SRB.pdf",useDingbats=FALSE)
+
+#p13=ggarrange(p7,p6alt,labels=c("A","B"),ncol=1,nrow=2,widths=c(1,2),heights=c(1,3),legend="right")
+#ggsave(plot=p13,height=11,width=8,dpi=200,filename="SM_d34S_vfSO4_SRB_compare2.pdf",useDingbats=FALSE)
+
+#p14=ggarrange(p7,p5alt,labels=c("A","B"),ncol=1,nrow=2,widths=c(1,2),heights=c(1,3),legend="bottom")
+#ggsave(plot=p14,height=11,width=8,dpi=200,filename="SM_d34S_vfSO4_ANME_compare2.pdf",useDingbats=FALSE)
+
+#p15=ggarrange(p8,p9alt,labels=c("A","B"),ncol=1,nrow=2,widths=c(1,2),heights=c(1,3),legend="right")
+#ggsave(plot=p15,height=11,width=8,dpi=200,filename="SM_d13C_v_DIC_ANME_compare2.pdf",useDingbats=FALSE)
+
+#p16=ggarrange(p8,p10alt,labels=c("A","B"),ncol=1,nrow=2,widths=c(1,2),heights=c(1,3),legend="right")
+#ggsave(plot=p16,height=11,width=8,dpi=200,filename="SM_d13C_v_DIC_SRB_compare2.pdf",useDingbats=FALSE)
+
+#p17=ggarrange(p7,p5,labels=c("A","B"),ncol=1,nrow=2,widths=c(1,2),heights=c(1,3),legend="bottom")
+#ggsave(plot=p17,height=11,width=8,dpi=200,filename="SM_d34S_vfSO4_ANME_compare3.pdf",useDingbats=FALSE)
+
+#p17b=ggarrange(p7,p5,labels=c("A","B"),ncol=1,nrow=2,widths=c(1,2),heights=c(1,3),legend="right")
+#ggsave(plot=p17b,height=11,width=8,dpi=200,filename="SM_d34S_vfSO4_ANME_compare3b.pdf",useDingbats=FALSE)
+
+p17c=marrangeGrob(grobs=list(p7g,p7bg,blank,p5g),nrow=2, ncol=3, layout_matrix=rbind(c(1,2,3),c(4,4,4),c(4,4,4),c(4,4,4)))
+ggsave(plot=p17c,height=11,width=8,dpi=200,filename="SM_d34S_vfSO4_ANME_compare3c.pdf",useDingbats=FALSE)
+
+#p18=ggarrange(p7,p7b,p6,labels=c("A","B"),ncol=1,nrow=2,widths=c(1,2),heights=c(1,3),legend="bottom")
+#ggsave(plot=p18,height=11,width=8,dpi=200,filename="SM_d34S_vfSO4_SRB_compare3d.pdf",useDingbats=FALSE)
+
+#p18b=ggarrange(p7,p6,labels=c("A","B"),ncol=1,nrow=2,widths=c(1,2),heights=c(1,3),legend="right")
+#ggsave(plot=p18b,height=11,width=8,dpi=200,filename="SM_d34S_vfSO4_SRB_compare3b.pdf",useDingbats=FALSE)
+
+#grob2=grob(p7,p7b,p6)
+p18c=marrangeGrob(grobs=list(p7g,p7bg,blank,p6g),nrow=2, ncol=3, layout_matrix=rbind(c(1,2,3),c(4,4,4),c(4,4,4),c(4,4,4)))
+ggsave(plot=p18c,height=11,width=8,dpi=200,filename="SM_d34S_vfSO4_SRB_compare3c.pdf",useDingbats=FALSE)
+
+#p19=ggarrange(p8,p9alt2,labels=c("A","B"),ncol=1,nrow=2,widths=c(1,2),heights=c(1,3),legend="bottom")
+#ggsave(plot=p19,height=11,width=8,dpi=200,filename="SM_d13C_vDIC_ANME_compare3.pdf",useDingbats=FALSE)
+
+#p19b=ggarrange(p8,p9alt2,labels=c("A","B"),ncol=1,nrow=2,widths=c(1,2),heights=c(1,3),legend="right")
+#ggsave(plot=p19b,height=11,width=8,dpi=200,filename="SM_d13C_vDIC_ANME_compare3b.pdf",useDingbats=FALSE)
+
+#grob3=grob(p8,p8b,p9alt2)
+p19c=marrangeGrob(grobs=list(p8g,p8cg,blank,p9alt2g),nrow=2, ncol=3, layout_matrix=rbind(c(1,2,3),c(4,4,4),c(4,4,4),c(4,4,4)))
+ggsave(plot=p19c,height=11,width=8,dpi=200,filename="SM_d13C_vDIC_ANME_compare3d.pdf",useDingbats=FALSE)
+
+#p20=ggarrange(p8,p10alt2,labels=c("A","B"),ncol=1,nrow=2,widths=c(1,2),heights=c(1,3),legend="bottom")
+#ggsave(plot=p20,height=11,width=8,dpi=200,filename="SM_d13C_vDIC_SRB_compare3.pdf",useDingbats=FALSE)
+
+#p20b=ggarrange(p8,p10alt2,labels=c("A","B"),ncol=1,nrow=2,widths=c(1,2),heights=c(1,3),legend="right")
+#ggsave(plot=p20b,height=11,width=8,dpi=200,filename="SM_d13C_vDIC_SRB_compare3b.pdf",useDingbats=FALSE)
+
+#grob4=grob(p8,p8b,p10alt2)
+p20c=marrangeGrob(grobs=list(p8g,p8cg,blank,p10alt2g),nrow=2, ncol=3, layout_matrix=rbind(c(1,2,3),c(4,4,4),c(4,4,4),c(4,4,4)))
+ggsave(plot=p20c,height=11,width=8,dpi=200,filename="SM_d13C_vDIC_SRB_compare3d.pdf",useDingbats=FALSE)
+```
+
+### Santa Monica Basin Proteome depth plots color coded by environment
+```{r envt_col,fig.width=11,fig.height=11,message=FALSE}
+#You need to melt the file first, and then edit output to remove the first column
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+#de novo proteome comparison
+dn_prot2=read.table("SMB_dn_prot_melt.txt",header=TRUE)
+prot_p1=ggplot(data=na.omit(dn_prot2),aes(x=value,y=cmbsf,color=Type2))+geom_point()+facet_grid(variable~Type2,scales="free_x")+theme_bw()+scale_y_reverse()
+ggsave(plot=prot_p1,height=10,width=5,dpi=200,filename="SM_denovoprot_siteH.pdf", useDingbats=FALSE)
+```
+
+
+## OTU genera overview:
+### Santa Monica Basin, OTU genera with 2% abundance cutoff
+```{r all_genera,fig.width=30,fig.height=20,message=FALSE}
+setwd("C:/Users/kryto/Desktop/Manuscripts/Santa Monica basin/R/R markdown file")
+#dataset file should have the following format:
+#SN   Site  Order  Core  Type2  OTU1  OTU2 ... OTU100
+#2000 A     A001   PC1   Clam   1.01  20.3     0.03
+dataset1=read.table("SM2013_L6_w_meta2.txt",header=TRUE)
+#Site H only if needed
+#dataset1=read.table("SM2013_tagL6_siteH.txt",header=TRUE)
+
+#Set cut off for % abundance, currently set to 2% abundance in at least one sample
+cutoff=0.02
+dataset1_meta=dataset1[,1:5]
+row.names(dataset1_meta)=dataset1[,1]
+#Set order for samples (Be aware: ggplot is very literal. A1 is followed by A10 not A2. So, use: A001,...,A301)
+dataset1_meta$SN=factor(dataset1_meta$SN,levels=dataset1_meta$SN[order(dataset1_meta$Order)])
+
+#reduce OTU file by minimum OTU abundance threshold
+row.names(dataset1)=dataset1[,1]
+tagdata.1=dataset1[,-(1:5)]
+#if not currently in fractional abundance divide by 100 to convert %s.
+data_matrix1=tagdata.1/100
+#Alternatively make sure that tagdata.1 is renamed data_matrix1
+#datamatrix1=tagdata.1
+maxab=apply(data_matrix1,2,max)
+n1=names(which(maxab>cutoff))
+data=data_matrix1[,which(names(data_matrix1) %in% n1)]
+#write.table(data,file="tagdata_more_than_x_percent.txt",sep="\t")
+data1=as.matrix(data)
+data1_meta=merge(data1,dataset1_meta,by="row.names")
+#melt dataframe
+data_new <- melt(data1_meta)
+data_new.1=data_new[,-1]
+names(data_new.1)=c("SN","Site","Order","Core","Type","OTU","value")
+write.table(data_new.1,"SM2013_tagL6_2percent.txt",sep="\t")
+
+#Plot data. With na.value=0, no circle is made if the OTU is absent in that sample.
+#p1=ggplot(data_newli.1, aes(x=SN, y=OTU)) +geom_point(aes(size=value,colour=Type,alpha=value))+scale_alpha(range=c(0.9,1),limits=c(1e-5,1),na.value=0)+theme(axis.text.x=element_text(angle=45,vjust=1,hjust=1,size=14))
+
+#Plot saved for all tag data
+#ggsave(plot=p1,height=20,width=30,dpi=200,filename="SMB2013_L6_new_col_by_type.pdf", useDingbats=FALSE)
+
+#Plot saved for subset of tag with only site H
+#ggsave(plot=p1,height=10,width=15,dpi=200,filename="SMB2013_L6_new_col_by_type_siteH.pdf", useDingbats=FALSE)
+```
+### Santa Monica Basin, SIMPER run above first, the final file is needed
+```{r simper,fig.width=30,fig.height=20,message=FALSE}
+setwd("C:/Users/kryto/Desktop/Manuscripts/Santa Monica basin/R/R markdown file/Core SIMPER composition similarity")
+#SIMPER analysis of OTUs driving site and core differences
+metadata=read.table("meta.txt",header=TRUE)
+meta=dataset1_meta[,2]
+simper1=simper(data1,meta,permutations=0,trace=FALSE)
+sink("SMB_simper1_L6_site.txt")
+summary(simper1)
+sink()
+meta2=dataset1_meta[,3]
+simper2=simper(data1,meta2,permutations=0,trace=FALSE)
+sink("SMB_simper2_L6_type.txt")
+summary(simper2)
+sink()
+meta3=metadata[,4]
+simper3=simper(data1,meta3,permutations=0,trace=FALSE)
+sink("SMB_simper3_L6_core.txt")
+summary(simper3)
+sink()
+simp_corr=read.table("SMB_simper3_L6_core_matrix.txt")
+col2=colorRampPalette(c("white","yellow","#FF7F00","#00007F","blue","#007FFF","cyan","red","#7F0000"))
+pdf("SM_core_similarity.pdf",height=10,width=12)
+corrplot1=corrplot(simp_corr2,method="shade",order="hclust",hclust.method="ward.D",col=col2(500),type="lower",cl.lim=c(0,1))
+dev.off()
+cprrplot2=corrplot(simp_corr2,method="shade",order="hclust",hclust.method="ward.D",col=col2(500),cl.lim=c(0,1),addrect=5,rect.col="black")
+
+# heatmap of OTUs important to core and site differences
+# from http://www.molecularecologist.com/2013/08/making-heatmaps-with-r-for-microbiome-analysis/
+# this function generates a heatmap and cluster analysis from tag squence data
+#samples should be in the first column and species/taxa in the first row. It easiest to invert the tables in excel
+
+simper_otu_core_diff=read.table("SMB_simper_cores_OTU_matrix.txt",header=TRUE)
+row.names(simper_otu_core_diff)=simper_otu_core_diff$Taxa
+socd.1=simper_otu_core_diff[,-1]
+data.prop=socd.1/rowSums(socd.1)
+maxab=apply(data.prop,2,max)
+n1=names(which(maxab>0.01))
+data.prop.1=data.prop[,which(names(data.prop) %in% n1)]
+
+#cluster analysis with clustering of sequences by sample and samples by sequences
+data.dist=vegdist(data.prop.1,method="bray")
+row.clus=hclust(data.dist,"aver")
+data.dist.g=vegdist(t(data.prop.1),method="bray")
+col.clus=hclust(data.dist.g,"aver")
+
+#generate a heatmap and dendrogram
+scaleyellowred=colorRampPalette(c("lightyellow","red"),space="rgb")(100)
+heatmap_cores=heatmap(as.matrix(data.prop.1),Rowv=as.dendrogram(row.clus),Colv=as.dendrogram(col.clus),col=scaleyellowred,margins=c(10,3))
+```
+
+
+### Unifrac analysis of iTAG data
+```{r unifrac,fig.width=30,fig.height=20,message=FALSE}
+setwd("C:/Users/kryto/Desktop/Manuscripts/Santa Monica basin/R/R markdown file")
+
+library(phyloseq)
+library(doParallel)
+library(biomformat)
+
+set.seed(1999)
+theme_set(theme_bw())
+
+tag_data=read.table("SM2013_L6_w_meta2.txt",header=TRUE)
+sample_data=t(tag_data[,1:5])
+write.table(sample_data,"forunifrac_sampledata.txt",sep="\t")
+#correct this file to remove header and make sure sample names begin with a letter
+sample_data=read.table("forunifrac_sampledata.txt",header=TRUE,row.names=1)
+biom_sample_data=sample_data(sample_data)
+
+tag_data2=t(tag_data[,-c(2:5)])
+write.table(tag_data2,"forunifrac_tagdata.txt",sep="\t")
+#correct this file to remove header and make sure sample names begin with a letter
+tag_data2=read.table("forunifrac_tagdata.txt",header=TRUE,row.names=1)
+biom_tag_data=otu_table(tag_data2,taxa_are_rows=TRUE,errorIfNULL=TRUE)
+
+#make a taxonomy matrix based on the tag data file being used
+taxa=read.table("forunifrac_taxa.txt",header=TRUE,row.names=1)
+colnames(taxa)=c("Domain","Phylum","Class","Order","Family","Genus")
+taxa=as.matrix(taxa)
+biom_taxa=tax_table(taxa,errorIfNULL=TRUE)
+
+#make phyloseq object
+physeq=phyloseq(biom_tag_data,biom_taxa,biom_sample_data)
+
+#Data can be plotted as bar graphs of abundance (remember this is alphabetical for both taxa names and sample names. Probably can fix by manually editing names with A001..Axxx numbering)
+plot_bar(physeq,fill="Domain")
+plot_bar(physeq,fill="Phylum")
+plot_bar(physeq,fill="Class")
+plot_bar(physeq,fill="Order")
+plot_bar(physeq,fill="Family")
+
+ 
+```
+
+### Santa Monica Basin, Denovo OTU with 2% abundance cutoff
+```{r denovo,fig.width=40,fig.height=20,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+#metadata
+dataset1_meta=read.table("SMB_meta.txt",header=TRUE)
+row.names(dataset1_meta)=dataset1_meta[,1]
+#Set order for samples (Be aware: ggplot is very literal. A1 is followed by A10 not A2. So, use: A001,...,A301)
+dataset1_meta$SN2=factor(dataset1_meta$SN2,levels=dataset1_meta$SN2[order(dataset1_meta$Order)])
+#Full denovo OTU file
+#dataset=read.table("SM2013_tagdenovo2.txt",header=TRUE,row.names=1)
+#Denovo OTU file with unclassified removed
+dataset=read.table("SM2013_tagdenovo3.txt",header=TRUE,row.names=1)
+dataset1=t(dataset)
+names(dataset1)=colnames(dataset1)
+tagdata.1=dataset1
+#This will normalize the dataset by row maximum (i.e. fraction), if not done manually, if used update tasgdata.1 instances below
+#tagdata.1b=decostand(tagdata.1,"total",MARGIN=1)
+maxab=apply(tagdata.1,2,max)
+cutoff=0.02
+n1=names(which(maxab>cutoff))
+data=tagdata.1[,which(names(tagdata.1) %in% n1)]
+#write.table(data,file="tagdata_more_than_x_percent.txt",sep="\t")
+data1=as.matrix(data)
+data1_meta=merge(data1,dataset1_meta,by="row.names")
+#melt dataframe
+data_new <- melt(data1_meta)
+data_new.1=data_new[,-(1:2)]
+names(data_new.1)=c("SN","Site","Order","Type2","OTU","value")
+#Plot data. With na.value=0, no circle is made if the OTU is absent in that sample.
+pdenovo=ggplot(data_new.1, aes(x=SN, y=OTU)) +geom_point(aes(size=value,colour=Type2,alpha=value))+scale_alpha(range=c(0.9,1),limits=c(1e-5,1),na.value=0)+theme(axis.text.x=element_text(angle=45,vjust=1,hjust=1,size=14))
+pdenovo
+```
+
+### Santa Monica Basin, OTU genera (2% cutoff) core average overview
+```{r core_avg,fig.width=14,fig.height=8.5,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+dataset1=read.table("SM2013_core_avg_w_meta2.txt",header=TRUE)
+#Set cut off for % abundance, currently set to 2% abundance in at least one sample
+cutoff=0.02
+dataset1_meta=dataset1[,1:4]
+row.names(dataset1_meta)=dataset1[,1]
+#Set order for samples (Be aware: ggplot is very literal. A1 is followed by A10 not A2. So, use: A001,...,A301)
+dataset1_meta$Core=factor(dataset1_meta$Core,levels=dataset1_meta$Core[order(dataset1_meta$Order)])
+#reduce OTU file by minimum OTU abundance threshold
+row.names(dataset1)=dataset1[,1]
+tagdata.1=dataset1[,-(1:4)]
+data_matrix1=tagdata.1/100
+maxab=apply(data_matrix1,2,max)
+n1=names(which(maxab>cutoff))
+data=data_matrix1[,which(names(data_matrix1) %in% n1)]
+write.table(data,file="tagdata_more_than_x_percent.txt",sep="\t")
+data1=as.matrix(data)
+data1_meta=merge(data1,dataset1_meta,by="row.names")
+#melt dataframe
+data_new <- melt(data1_meta)
+data_new.1=data_new[,-1]
+names(data_new.1)=c("Core","Site","Order","Type","OTU","value")
+#plot data
+p2=ggplot(data_new.1, aes(x=Core, y=OTU))+geom_point(aes(size=value,colour=Type,alpha=value))+scale_alpha(range = c(0.9,1),limits=c(1e-5,1),na.value=0)+theme(axis.text.x=element_text(angle=45,vjust=1,hjust=1,size=10))
+p2
+```
+
+### Santa Monica Basin, OTU genera (2% cutoff) heatmap, annotated annHeatmap2
+```{r OTU_heatmap,fig.width=30,fig.height=20,message=FALSE}
+setwd("C:/Users/kryto/Desktop/Manuscripts/Santa Monica basin/R/R markdown file")
+dataset1=read.table("SM2013_L6_w_meta2.txt",header=TRUE)
+#Data set with only two B cores included (PC80 and PC67)
+dataset1=read.table("SM2013_L6_w_meta3.txt",header=TRUE)
+
+#For more information: http://www.molecularecologist.com/2013/08/making-heatmaps-with-r-for-microbiome-analysis/
+# This code assumes your data is a matrix oriented with samples in descending rows and OTUs in columns
+# If that's not the case, use the commented out code below to transpose the matrix
+# dataset1=t(dataset1)
+
+#Set cut off for % abundance, currently set to 2% abundance in at least one sample
+cutoff=0.025
+#If you want to set the order for samples (Be aware: ggplot is very literal. A1 is followed by A10 not A2. So, use: A001,...,A301), only works if you don't cluster samples
+#dataset1$SN=factor(dataset1$SN,levels=dataset1$SN[order(dataset1$Order)])
+
+#reduce OTU file by minimum OTU abundance threshold
+row.names(dataset1)=dataset1[,1]
+tagdata.1=dataset1[,-(1:6)]
+
+meta1=dataset1[,1:6]
+meta2=(meta1[,-(1:2)])
+meta3=meta2[,-3]
+
+data_matrix1=tagdata.1/100
+maxab=apply(data_matrix1,2,max)
+n1=names(which(maxab>cutoff))
+data=data_matrix1[,which(names(data_matrix1) %in% n1)]
+
+#cluster analysis with clustering of sequences by sample and samples by sequences
+data.dist=vegdist(data,method="jaccard")
+row.clus=hclust(data.dist,"ward.D")
+data.dist.g=vegdist(t(data),method="jaccard")
+col.clus=hclust(data.dist.g,"ward.D")
+
+#generate a heatmap and dendrogram with annotation
+plot(annHeatmap2(as.matrix(data),col=colorRampPalette(c("lightyellow","red"),space="rgb")(151),breaks=150, dendrogram=list(Row=list(as.dendrogram(row.clus)), Col=list(dendro=as.dendrogram(col.clus))), legend=4, labels=list(Col=list(nrow=10)),ann=list(Row=list(data=meta3)),cluster=list(Row=list(cuth=0.25,col=brewer.pal(12,"Set3")))))
+```
+
+### Santa Monica Basin, OTU genera core average (2% cutoff) heatmap, Superheat
+```{r OTUavgg_heatmap,fig.width=35,fig.height=15,message=FALSE}
+#For more information: https://rlbarter.github.io/superheat/index.html
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+dataset1=read.table("SM2013_core_avg_w_meta2.txt",header=TRUE)
+meta1=read.table("SMB2013_L6avg_meta.txt",header=TRUE)
+# This code assumes your data is a matrix oriented with samples in descending rows and OTUs in columns
+# If that's not the case, use the commented out code below to transpose the matrix
+# dataset1=t(dataset1)
+#Set cut off for % abundance, currently set to 2% abundance in at least one sample
+cutoff=0.02
+#reduce OTU file by minimum OTU abundance threshold
+row.names(dataset1)=dataset1[,1]
+tagdata.1=dataset1[,-(1:6)]
+data_matrix1=tagdata.1/100
+maxab=apply(data_matrix1,2,max)
+n1=names(which(maxab>cutoff))
+data=data_matrix1[,which(names(data_matrix1) %in% n1)]
+data_t=t(data)
+#Cluster data
+data.dist=vegdist(data_t,method="euclidean")
+row.clus=hclust(data.dist,"aver")
+data.dist.g=vegdist(t(data_t),method="euclidean")
+col.clus=hclust(data.dist.g,"aver")
+#plot heatmap
+#To add if you want gridlines: grid.hline.col="white",grid.hline.size=1,grid.vline.col="white",grid.vline.size=1
+#yt=t(dataset1$Depth), yt.axis.name="Depth", yt.plot.type="scatter")
+superheat(data_t,left.label.text.size=3,left.label.text.alignment="right", force.bottom.label=TRUE, bottom.label.text.size=3, bottom.label.text.angle=90,scale=FALSE, membership.rows=row.clus$order, left.label="variable", membership.cols=col.clus$order, bottom.label="variable", heat.pal=c("blue", "white", "red"),yt=meta1$Type_num, yt.plot.type="bar")
+```
+
+
+
+## Proteomics overview:
+### SM Proteome updated plots May 2018
+```{r dn_envt_col,fig.width=8,fig.height=10,message=FALSE}
+setwd("C:/Users/kryto/Desktop/Manuscripts/Santa Monica basin/R/R markdown file")
+tol52col=c("#023fa5", "#7d87b9", "#bec1d4", "#d6bcc0", "#bb7784", "#8e063b", "#4a6fe3", "#8595e1", "#b5bbe3", "#e6afb9", "#e07b91", "#d33f6a", "#11c638", "#8dd593", "#c6dec7", "#ead3c6", "#f0b98d", "#ef9708", "#0fcfc0", "#9cded6", "#d5eae7", "#f3e1eb", "#f6c4e1", "#f79cd4","#023fa5", "#7d87b9", "#bec1d4", "#d6bcc0", "#bb7784", "#8e063b", "#4a6fe3", "#8595e1", "#b5bbe3", "#e6afb9", "#e07b91", "#d33f6a", "#11c638", "#8dd593", "#c6dec7", "#ead3c6", "#f0b98d", "#ef9708", "#0fcfc0", "#9cded6", "#d5eae7", "#f3e1eb", "#f6c4e1", "#f79cd4")
+#dn_mat_prot=read.table("SMB_dn_prot_mat.txt",header=TRUE)
+#dn_mat_prot2=melt(dn_mat_prot,id.vars=c("SN","Type","Depth"),na.rm=FALSE)
+#write.table(dn_mat_prot2,file="SMB_dn_prot_mat_melt.txt",sep="\t")
+dn_mat_prot2=read.table("SMB_dn_prot_mat_melt.txt",header=TRUE)
+dnplot1=ggplot(dn_mat_prot2,aes(x=Depth,y=value,fill=variable))+geom_bar(stat="identity",position="fill",colour="black")+scale_fill_manual(values=tol26col)+coord_flip()+scale_x_reverse()
+ggsave(plot=dnplot1,height=8,width=10,dpi=200,filename="SM_dn_prot_mat_may2018.pdf", useDingbats=FALSE)
+
+dn_mat_chem=read.table("SMB_dn_chem_mat2.txt",header=TRUE)
+dn_plot2=ggplot(dn_mat_chem,aes(x=Chem_val,y=Depth))+geom_point()+geom_path()+scale_y_reverse()+facet_grid(~Chem,scale="free_x")+theme_bw()
+ggsave(plot=dnplot2,height=8,width=10,dpi=200,filename="SM_dn_chem_mat_may2018.pdf", useDingbats=FALSE)
+
+dn_mat_fxn=read.table("SMB_dn_chem_mat3.txt",header=TRUE)
+dn_plot_5=ggplot(dn_mat_fxn,aes(x=Depth))+geom_line(aes(y=all_N,color="all N"))+geom_line(aes(y=nitrate,color="Nitrate"))+geom_line(aes(y=nitrite,color="Nitrite"))+geom_line(aes(y=hydroxylamine,color="Hydroxylamine"))+geom_line(aes(y=nitrous_oxide,color="Nitrous Oxide"))+coord_flip()+scale_x_reverse()
+ggsave(plot=dn_plot_5,height=4,width=5,dpi=200,filename="SM_dn_N_fxn_may2018.pdf")
+dn_plot_6=ggplot(dn_mat_fxn,aes(x=Depth)) +geom_line(aes(y=all_S,color="all C"))+geom_line(aes(y=Diss_sulfate,color="Dissimilatory Sulfate"))+geom_line(aes(y=Ass_sulfate,color="Assimilatory Sulfate"))+geom_line(aes(y=S_int,color="Sulfur Intermediate"))+geom_line(aes(y=Sulfide,color="Sulfide Oxidation"))+coord_flip()+scale_x_reverse()
+ggsave(plot=dn_plot_6,height=4,width=5,dpi=200,filename="SM_dn_S_fxn_may2018.pdf")
+dn_plot_7=ggplot(dn_mat_fxn,aes(x=Depth))+geom_line(aes(y=all_C,color="all C"))+geom_line(aes(y=Glycolysis_Carbohy_deg,color="Glycolysis/Carbohydrates"))+geom_line(aes(y=methane,color="Methane metabolism"))+geom_line(aes(y=Red_AcetylCoA,color="Reductive Acetyl-CoA"))+geom_line(aes(y=TCA,color="TCA/Reductive TCA"))+coord_flip()+scale_x_reverse()
+ggsave(plot=dn_plot_7,height=4,width=5,dpi=200,filename="SM_dn_C_fxn_may2018.pdf")
+
+#dn_clam_prot=read.table("SMB_dn_prot_clam.txt",header=TRUE)
+#dn_clam_prot2=melt(dn_clam_prot,id.vars=c("SN","Type","Depth"),na.rm=FALSE)
+#write.table(dn_clam_prot2,file="SM_dn_prot_clam_melt.txt",sep="\t")
+dn_clam_prot2=read.table("SM_dn_prot_clam_melt.txt",header=TRUE)
+dnplot3=ggplot(dn_clam_prot2,aes(x=Depth,y=value,fill=variable))+geom_bar(stat="identity",position="fill",colour="black")+scale_fill_manual(values=tol26col)+coord_flip()+scale_x_reverse()
+ggsave(plot=dn_plot3,height=4,width=5,dpi=200,filename="SM_dn_prot_clam_may2018.pdf", useDingbats=FALSE)
+
+dn_clam_chem=read.table("SMB_dn_chem_clam2.txt",header=TRUE)
+dn_plot4=ggplot(dn_clam_chem,aes(x=Chem_val,y=Depth))+geom_point()+geom_path()+scale_y_reverse()+facet_grid(~Chem,scale="free_x")+theme_bw()
+ggsave(plot=dn_plot4,height=4,width=5,dpi=200,filename="SM_dn_chem_clam_may2018.pdf", useDingbats=FALSE)
+
+dn_clam_fxn=read.table("SMB_dn_chem_clam3.txt",header=TRUE)
+dn_plot_8=ggplot(dn_clam_fxn,aes(x=Depth))+geom_line(aes(y=all_N,color="all N"))+geom_line(aes(y=nitrate,color="Nitrate"))+geom_line(aes(y=nitrite,color="Nitrite"))+geom_line(aes(y=hydroxylamine,color="Hydroxylamine"))+geom_line(aes(y=nitrous_oxide,color="Nitrous Oxide"))+coord_flip()+scale_x_reverse(limits=c(9,0))
+ggsave(plot=dn_plot_8,height=4,width=5,dpi=200,filename="SM_dn_N_clam_fxn_may2018.pdf")
+dn_plot_9=ggplot(dn_clam_fxn,aes(x=Depth)) +geom_line(aes(y=all_S,color="all C"))+geom_line(aes(y=Diss_sulfate,color="Dissimilatory Sulfate"))+geom_line(aes(y=Ass_sulfate,color="Assimilatory Sulfate"))+geom_line(aes(y=S_int,color="Sulfur Intermediate"))+geom_line(aes(y=Sulfide,color="Sulfide Oxidation"))+coord_flip()+scale_x_reverse(limits=c(9,0))
+ggsave(plot=dn_plot_9,height=4,width=5,dpi=200,filename="SM_dn_S_clam_fxn_may2018.pdf")
+dn_plot_10=ggplot(dn_clam_fxn,aes(x=Depth))+geom_line(aes(y=all_C,color="all C"))+geom_line(aes(y=Glycolysis_Carbohy_deg,color="Glycolysis/Carbohydrates"))+geom_line(aes(y=methane,color="Methane metabolism"))+geom_line(aes(y=Red_AcetylCoA,color="Reductive Acetyl-CoA"))+geom_line(aes(y=TCA,color="TCA/Reductive TCA"))+coord_flip()+scale_x_reverse(limits=c(9,0))
+ggsave(plot=dn_plot_10,height=4,width=5,dpi=200,filename="SM_dn_C_clam_fxn_may2018.pdf")
+
+```
+### Comparison of Consensus, De Novo, and Quantitative datasets
+#### matrixplot proteome/geochem data
+```{r,fig.width=11,fig.height=11,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+#load ggplot_smooth_func for adding R^2 and equations, for details see https://gist.github.com/kdauria/524eade46135f6348140
+source('~/R/win-library/3.4/ggplot_smooth_func.R')
+
+#quant prot relative abundance and geochem data
+chem_qprot=read.table("SiteH_chem_qprot_plot3.txt",header=TRUE)
+chem_qprot_melt=melt(chem_qprot,id.vars=c("Sample","Metabolism","Metab_abund"),na.rm=FALSE)
+names(chem_qprot_melt)=c("Sample","Metabolism","Metab_abund","Geochem","Geochem_val")
+#write.table(chem_qprot_melt,file="SiteH_chem_qprot_plot3_melt.txt",sep="\t")
+
+#For the below plots: geom_smooth method possibilities --> lm is a linear smooth, glm is a generalised linear smooth, loess is a local smooth (<1000 observations), gam is a local smooth (>1000 observations), The confidence level is defaulted at 0.95, and can be changed with level=value.
+p31=ggplot(data=na.omit(chem_qprot_melt),aes(x=Geochem_val,y=Metab_abund,label=Metab_abund))+geom_point()+stat_smooth_func(geom="text",color="black",size=2,method="lm",hjust="inward",parse=TRUE)+geom_smooth(method="lm",se=FALSE)+facet_wrap(Metabolism~Geochem,scales="free_x")+theme_bw()
+ggsave(plot=p31,height=15,width=15,dpi=200,filename="SM_geochem_qprot_siteH_v1.pdf", useDingbats=FALSE)
+
+#de novo prot relative abundance and geochem data
+chem_dnprot2=read.table("SiteH_chem_dnprot_plot2.txt",header=TRUE)
+chem_dnprot2_melt=melt(chem_dnprot2,id.vars=c("Sample","Type","Metabolism","Metab_abund"),na.rm=FALSE)
+names(chem_dnprot2_melt)=c("Sample","Type","Metabolism","Metab_abund","Geochem","Geochem_val")
+#write.table(chem_dnprot2_melt,file="SiteH_chem_dnprot_plot2_melt.txt",sep="\t")
+
+chem_dnprot3=read.table("SiteH_chem_dnprot_plot3.txt",header=TRUE)
+chem_dnprot3_melt=melt(chem_dnprot3,id.vars=c("Sample","Type","Metabolism","Metab_abund"),na.rm=FALSE)
+names(chem_dnprot3_melt)=c("Sample","Type","Metabolism","Metab_abund","Geochem","Geochem_val")
+#write.table(chem_dnprot3_melt,file="SiteH_chem_dnprot_plot3_melt.txt",sep="\t")
+
+#For the below plots: geom_smooth method possibilities --> lm is a linear smooth, glm is a generalised linear smooth, loess is a local smooth (<1000 observations), gam is a local smooth (>1000 observations), The confidence level is defaulted at 0.95, and can be changed with level=value.
+p33=ggplot(data=na.omit(chem_dnprot2_melt),aes(x=Geochem_val,y=Metab_abund,color=Type,group=Type,label=Metab_abund))+geom_point()+stat_smooth_func(geom="text",color="black",size=2,method="lm",hjust="left",parse=TRUE)+geom_smooth(method="lm",se=FALSE)+facet_wrap(Metabolism~Geochem,scales="free_x")+theme_bw()
+ggsave(plot=p33,height=15,width=15,dpi=200,filename="SM_geochem_dnprot_siteH_v1.pdf", useDingbats=FALSE)
+
+p34=ggplot(data=na.omit(chem_dnprot3_melt),aes(x=Geochem_val,y=Metab_abund,color=Type,group=Type,label=Metab_abund))+geom_point()+stat_smooth_func(geom="text",color="black",size=2,method="lm",hjust="left",parse=TRUE)+geom_smooth(method="lm",se=FALSE)+facet_wrap(Metabolism~Geochem,scales="free_x")+theme_bw()
+ggsave(plot=p34,height=15,width=15,dpi=200,filename="SM_geochem_dnprot_siteH_v2.pdf", useDingbats=FALSE)
+
+```
+
+#### Abundance plots de novo and quantitative proteome relative abundance
+```{r,fig.width=5,fig.height=10,message=FALSE}
+setwd("C:/Users/kryto/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+#dn_q_prot=read.table("SMB_denovo_quant_prot.txt",header=TRUE)
+#dn_q_prot2=melt(dn_q_prot,id.vars=c("Sample","Type2","cmbsf"),na.rm=FALSE)
+#write.table(dn_q_prot2,file="SMB_dn_q_prot_melt.txt",sep="\t")
+dn_q_prot2=read.table("SMB_dn_q_prot_melt.txt",header=TRUE)
+
+dn_q_prot_p1=ggplot(data=na.omit(dn_q_prot2),aes(x=value,y=cmbsf,color=Type2))+geom_point()+facet_grid(variable~Type2,scales="free_x")+theme_bw()+scale_y_reverse()
+ggsave(plot=dn_q_prot_p1,height=10,width=5,dpi=200,filename="SM_denovoquantprot_siteH.pdf", useDingbats=FALSE)
+
+dn_q_prot_p2=ggplot(data=na.omit(dn_q_prot2),aes(x=cmbsf,y=value,color=Type2))+geom_point()+facet_grid(variable~Type2,scales="free_y")+theme_bw()+scale_x_reverse()
+ggsave(plot=dn_q_prot_p2,height=10,width=5,dpi=200,filename="SM_denovoquantprot_siteH_2.pdf", useDingbats=FALSE)
+```
+
+#### Heatmap of consensus proteome gene ontology
+```{r consensus, fig.width=10,fig.height=8,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+data.consensus=read.table("SM2013_proteomeconsensus.txt",header=TRUE, row.names=1)
+
+#Cluster analysis with clustering of variables by sample
+# Other distance metrics include "euclidean", "manhattan","gower", "canberra","kulczynski,"morsita,"horn","binomial"
+
+data.dist=vegdist(data.consensus,method="euclidean")
+row.clus=hclust(data.dist,"aver")
+data.dist.g=vegdist(t(data.consensus),method="euclidean")
+col.clus=hclust(data.dist.g,"aver")
+
+# Generate a heatmap and dendrogram, with a yellow to red color scale change these colors as desired; the second color is for high values
+
+scaleyellowred=colorRampPalette(c("lightyellow","red"),space="rgb")(50)
+
+#Simple heatmap with dendrograms
+
+heatmap(as.matrix(data.consensus),Colv=as.dendrogram(col.clus),Rowv=NA,col=scaleyellowred,margins=c(20,7))
+```
+
+#### Heatmap of de novo proteome gene ontology
+```{r denovo, fig.width=10,fig.height=8,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+data.denovo=read.table("SM2013_proteomedenovo.txt",header=TRUE, row.names=1)
+
+#Cluster analysis with clustering of variables by sample
+# Other distance metrics include "euclidean", "manhattan","gower", "canberra","kulczynski,"morsita,"horn","binomial"
+
+data.dist=vegdist(data.denovo,method="euclidean")
+row.clus=hclust(data.dist,"aver")
+data.dist.g=vegdist(t(data.denovo),method="euclidean")
+col.clus=hclust(data.dist.g,"aver")
+
+# Generate a heatmap and dendrogram, with a yellow to red color scale change these colors as desired; the second color is for high values
+
+scaleyellowred=colorRampPalette(c("lightyellow","red"),space="rgb")(50)
+
+#Simple heatmap with dendrograms
+
+heatmap(as.matrix(data.denovo),Colv=as.dendrogram(col.clus),Rowv=NA,col=scaleyellowred,margins=c(20,7))
+```
+
+#### Heatmap of quantitative proteome gene ontology
+```{r quant, fig.width=10,fig.height=8,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+data.quant=read.table("SM2013_proteomequant.txt",header=TRUE, row.names=1)
+#Cluster analysis with clustering of variables by sample
+# Other distance metrics include "euclidean", "manhattan","gower", "canberra","kulczynski,"morsita,"horn","binomial"
+data.dist=vegdist(data.quant,method="euclidean")
+row.clus=hclust(data.dist,"aver")
+data.dist.g=vegdist(t(data.quant),method="euclidean")
+col.clus=hclust(data.dist.g,"aver")
+# Generate a heatmap and dendrogram, with a yellow to red color scale change these colors as desired; the second color is for high values
+scaleyellowred=colorRampPalette(c("lightyellow","red"),space="rgb")(50)
+#Simple heatmap with dendrograms
+heatmap(as.matrix(data.quant),Colv=as.dendrogram(col.clus),Rowv=NA,col=scaleyellowred,margins=c(20,7))
+```
+
+
+
+## Corelation Analysis 
+### OTU (L6, 2% cutoff) Pearson pairwise correlation in prep for network analysis
+```{r OTU_Corr, fig.width=30,fig.height=30,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+dataset1=read.table("SM2013_L6_w_meta2.txt",header=TRUE)
+#Set cut off for % abundance, currently set to 2% abundance in at least one sample
+cutoff=0.02
+dataset1_meta=dataset1[,1:6]
+row.names(dataset1_meta)=dataset1[,1]
+row.names(dataset1)=dataset1[,1]
+tagdata.1=dataset1[,-(1:6)]
+data_matrix1=tagdata.1/100
+maxab=apply(data_matrix1,2,max)
+#head(maxab)
+n1=names(which(maxab>cutoff))
+data=data_matrix1[,which(names(data_matrix1) %in% n1)]
+data1=as.matrix(data)
+#write.table(data,file=paste(Sys.time(),"tagdata_more_than_x_percent.txt",sep="\t")
+#correlation with pvalue pearson or spearman
+data.pearsoncor=rcorr(data1,type="pearson")
+pearson_pval=data.pearsoncor$P
+#write.table(data.pearsoncor$r,file="SM2013_pearsoncor.txt",sep="\t")
+#write.table(pearson_pval,file="SM2013_pearson_pval.txt",sep="\t")
+#corrplot(data.pearsoncor$r, method="circle", type="upper", order="hclust", hclust.method="ward.D", diag=FALSE, p.mat=data.pearsoncor$P,insig="blank", tl.cex=1, tl.col="black", tl.srt=45)
+```
+### Converting the above correlation matrix into a network diagram
+```{r OTU_network, fig.width=30,fig.height=30,message=FALSE}
+# The above correlation analysis needs to be run first
+# Reshape matrices for cytoscape input and rbind p-values with corr coefficients
+# Final format will be:
+#   OTU1 OTU2  Pearson Pearson_pval  Spearman  Spearman_pval
+#   A1    A2    0.3     0.001         0.31      0.0015
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+pearson_cor_tri=upper.tri(data.pearsoncor$r,diag=F)
+data.pearsoncor_copy=data.pearsoncor$r
+data.pearsoncor_copy[!pearson_cor_tri]=NA
+data.pearsoncor_melted=na.omit(melt(data.pearsoncor_copy,value.name="correlationCoef"))
+colnames(data.pearsoncor_melted)=c("OTU1","OTU2","Pearson")
+# write.csv(data.pearsoncor_melted,"data.pearsoncor_3col.txt")
+pearson_pval_tri=upper.tri(pearson_pval,diag=F)
+data.pearsoncor_copy2=pearson_pval
+data.pearsoncor_copy2[!pearson_pval_tri]=NA
+pearson_pval_melted=na.omit(melt(data.pearsoncor_copy2,value.name="pvalue"))
+colnames(pearson_pval_melted)=c("OTU1","OTU2","Pearson_pval")
+pearson_all=merge(data.pearsoncor_melted,pearson_pval_melted)
+# write.csv(pearson_all,"pearson_all_pval.txt")
+# subset data to include only pairings with p-val < 0.01
+pearson_all_sig=subset(pearson_all,pearson_all$Pearson_pval<0.01)
+# Output an excel file that can be used in cytoscape
+# Write.xlsx(pearson_all_sig,file="SM2013_corr_sig_pval_for_cytoscape.xlsx")
+# Now for converting the correlation file into an edge list and making a network
+# For more info see: http://www.kateto.net/wp-content/uploads/2015/06/Polnet%202015%20Network%20Viz%20Tutorial%20-%20Ognyanova.pdf
+# Pick a threshold for what pearson correlation level will be plotted
+pearson_highpos=subset(pearson_all_sig[,1:3],pearson_all_sig$Pearson>0.5)
+edges_highpos1=as.matrix(pearson_highpos[,1:3])
+edges_highpos1_cut=data.frame(source=edges_highpos1[,1],target=edges_highpos1[,2])
+# To color nodes by metabolism type, upload an additional file with that information
+# OTU1  Metabolism
+# Deltaproteobacteria Sulfate_Reduction
+nodes=read.table("SM2013_node_character.txt",header=TRUE)
+# Parse nodes list to include only those meeting the Pearson cutoff
+# !!! This new table with node metabolic characteristics needs to have all of the ';', '(', ')', and '-' are replaced with '.' !!!
+nodes_highpos=c(as.character(pearson_highpos$OTU1),as.character(pearson_highpos$OTU2))
+nodes_highpos=as.data.frame(nodes_highpos)
+nodes_highpos1=nodes_highpos[!duplicated(nodes_highpos),]
+nodes_highpos1=as.data.frame(nodes_highpos[!duplicated(nodes_highpos),])
+names(nodes_highpos1)=c("OTU1")
+#write.table(nodes_highpos1,file="nodes_highpos.txt",sep="\t")
+nodes2=nodes[order(nodes$OTU1),]
+metab_cols=c("Ammonium_Oxidation"="#771155","Heterotroph"="#4477AA","Iron_Sulfur_Oxidation"="#44AAAA","Methanogen"="#77CCCC","Methanotroph"="#117744","Mixotrophic"="#777711","Nitrite_Oxidation"="#AAAA44","Sulfate_Reduction"="#774411","Sulfur_Metal_Reduction"="#AA7744","Sulfur_Oxidation"="#DDAA77","Sulfur_Reduction"="#771122","Unknown"="#AA4455")
+net=network(edges_highpos1_cut,directed=FALSE,matrix.type="edgelist")
+vertex.names=as.data.frame(net %v% "vertex.names")
+colnames(vertex.names)="OTU1"
+nodes_highpos2=join(vertex.names,nodes2,by="OTU1")
+SM2013_ggnet=ggnet2(net,label=TRUE,size="degree",mode="fruchtermanreingold",color=nodes_highpos2$Metabolism,palette=metab_cols,edge.size=2*pearson_highpos$Pearson,edge.color="darkgrey")
+ggsave(plot=SM2013_ggnet,height=15,width=35,dpi=200,filename="SM2013_ggnet_L6_2per_metab.pdf", useDingbats=FALSE)
+```
+### Corelation of Geochemistry/Tag data all sites (L6 and geochem 2% cutoff)
+```{r OTU_Corr_all, fig.width=30,fig.height=30,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+#for_corr_all=read.table("SM2013_corr_all_oct2017.txt",header=TRUE,row.names=1)
+#site H
+for_corr_all=read.table("siteH_L6_forcorr.txt",header=TRUE,row.names=1)
+#for_corr_all_1=for_corr_all[,-(1:2)]
+for_corr_all_2=as.matrix(for_corr_all)
+#all_pearsoncorr=cor(for_corr_all_2,use="complete.obs",method="pearson")
+all_pearsoncorr=rcorr(for_corr_all_2,type="pearson",na.action(na.omit(NA)))
+all_pearson_pval=all_pearsoncorr$P
+write.table(all_pearsoncorr$r,file="SM2013_allpearsoncor_H.txt",sep="\t")
+write.table(all_pearson_pval,file="SM2013_allpearson_H_pval.txt",sep="\t")
+pdf("SM_corrmatrix_all_H.pdf",height=40,width=40)
+corrplot_all=corrplot(all_pearsoncorr$r, method="circle", p.mat=all_pearsoncorr$P,insig="blank", tl.cex=1, tl.col="black", tl.srt=45)
+#dev.off()
+```
+### Converting the above correlation matrix into a network diagram and bipartite network of Geochemistry/Tag data all sites (L6 and geochem 2% cutoff)
+```{r OTU_Corr_all, fig.width=30,fig.height=30,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+# The above correlation analysis needs to be run first
+
+#21 color palette
+tol21rainbow=c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", "#77CCCC", "#117744", "#44AA77", "#88CCAA", "#777711", "#AAAA44", "#DDDD77", "#774411", "#AA7744", "#DDAA77", "#771122", "#AA4455", "#DD7788")
+
+# Reshape matrices for cytoscape input and rbind p-values with corr coefficients
+all_pearson_cor_tri=upper.tri(all_pearsoncorr$r,diag=F)
+all.data.pearsoncor_copy=all_pearsoncorr$r
+all.data.pearsoncor_copy[!all_pearson_cor_tri]=NA
+all.data.pearsoncor_melted=na.omit(melt(all.data.pearsoncor_copy,value.name="correlationCoef"))
+colnames(all.data.pearsoncor_melted)=c("OTU1","OTU2","Pearson")
+#write.csv(all.data.pearsoncor_melted,"all.data.pearsoncor_3col.txt")
+all_pearson_pval_tri=upper.tri(all_pearson_pval,diag=F)
+all_pearsoncor_copy2=all_pearson_pval
+all_pearsoncor_copy2[!all_pearson_pval_tri]=NA
+all_pearson_pval_melted=na.omit(melt(all_pearsoncor_copy2,value.name="pvalue"))
+colnames(all_pearson_pval_melted)=c("OTU1","OTU2","Pearson_pval")
+all_pearson_all=merge(all.data.pearsoncor_melted,all_pearson_pval_melted)
+#write.csv(all_pearson_all,"all_pearson_all_pval.txt")
+
+# subset data to include only pairings with p-val < 0.01
+all_pearson_all_sig=subset(all_pearson_all,all_pearson_all$Pearson_pval<0.01)
+# Output an excel file that can be used in cytoscape
+write.xlsx(all_pearson_all_sig,file="SM2013_all_H_corr_sig_pval_for_cytoscape.xlsx")
+
+# Now for converting the correlation file into an edge list and making a network
+# For more info see: http://www.kateto.net/wp-content/uploads/2015/06/Polnet%202015%20Network%20Viz%20Tutorial%20-%20Ognyanova.pdf
+# Pick a threshold for what pearson correlation level will be plotted
+all_pearson_highpos=subset(all_pearson_all_sig[,1:3],all_pearson_all_sig$Pearson>0.5)
+all_edges_highpos1=as.matrix(all_pearson_highpos[,1:3])
+#For an edgelist defined network cut out the source and target nodes
+all_edges_highpos1_cut=data.frame(source=all_edges_highpos1[,1],target=all_edges_highpos1[,2])
+
+# To color nodes by metabolism type, upload an additional file with that information
+# !!! This new table with node metabolic characteristics needs to have all of the ';', '(', ')', and '-' are replaced with '.' !!!
+# OTU1  Metabolism
+# Deltaproteobacteria Sulfate_Reduction
+nodes=read.table("SM2013_node_character.txt",header=TRUE)
+
+# Parse nodes list to include only those meeting the Pearson cutoff
+all_nodes_highpos=c(as.character(all_pearson_highpos$OTU1),as.character(all_pearson_highpos$OTU2))
+all_nodes_highpos=as.data.frame(all_nodes_highpos)
+all_nodes_highpos1=all_nodes_highpos[!duplicated(all_nodes_highpos),]
+all_nodes_highpos1=as.data.frame(all_nodes_highpos[!duplicated(all_nodes_highpos),])
+names(all_nodes_highpos1)=c("OTU1")
+write.table(all_nodes_highpos1,file="all_nodes_highpos_H.txt",sep="\t")
+all_nodes2=nodes[order(nodes$OTU1),]
+
+metab_cols1=c("Ammonium_Oxidation"="#771155","Heterotroph"="#4477AA","Iron_Sulfur_Oxidation"="#44AAAA","Methanogen"="#77CCCC","Methanotroph"="#117744","Mixotrophic"="#777711","Nitrite_Oxidation"="#AAAA44","Sulfate_Reduction"="#774411","Sulfur_Metal_Reduction"="#AA7744","Sulfur_Oxidation"="#DDAA77","Sulfur_Reduction"="#771122","Unknown"="#AA4455")
+
+metab_cols2=c("Ammonium_Oxidation"="#771155","Heterotroph"="#4477AA","Iron_Sulfur_Oxidation"="#44AAAA","Methanogen"="#77CCCC","Methanotroph"="#117744","Mixotrophic"="#777711","Nitrite_Oxidation"="#AAAA44","Sulfate_Reduction"="#774411","Sulfur_Metal_Reduction"="#AA7744","Sulfur_Oxidation"="#DDAA77","Sulfur_Reduction"="#771122","Unknown"="#AA4455","cmbsf"="dodgerblue2","d34S_HS"="red","d34S_SO4"="green4","fSO4"="purple","NH4"="orange","d13C"="#CE1620","DIC"="#6A3D9A","HS"="#FF7F00","NO3"="#FB9A99","SO4"="#CAB2D6")
+
+metab_cols3=c("Ammonium_Oxidation"="#771155","Heterotroph"="#4477AA","Iron_Sulfur_Oxidation"="#44AAAA","Methanogen"="#77CCCC","Methanotroph"="#117744","Mixotrophic"="#777711","Nitrite_Oxidation"="#AAAA44","Sulfate_Reduction"="#774411","Sulfur_Metal_Reduction"="#AA7744","Sulfur_Oxidation"="#DDAA77","Sulfur_Reduction"="#771122","Unknown"="#AA4455","Autotroph"="dodgerblue2","ANAMOX"="red","Denitrification"="green4","Iron_Reduction"="purple","Methyl_Oxidation"="orange","Iron_Oxidation"="#CE1620","Parasitic"="#6A3D9A")
+
+#Make edgelist network
+all_net=network(all_edges_highpos1_cut,directed=FALSE,matrix.type="edgelist")
+#Assign metabolic type to the vertex names
+all_vertex.names=as.data.frame(all_net %v% "vertex.names")
+colnames(all_vertex.names)="OTU1"
+all_nodes_highpos2=join(all_vertex.names,all_nodes2,by="OTU1")
+
+#plot and save the network
+SM2013_all_ggnet=ggnet2(all_net,label=TRUE,size="degree",mode="fruchtermanreingold",color=all_nodes_highpos2$Metabolism,palette=metab_cols3,edge.size=2*all_pearson_highpos$Pearson,edge.color="darkgrey")
+ggsave(plot=SM2013_all_ggnet,height=15,width=35,dpi=200,filename="SM2013_all_ggnet_L6_2per_geochem_metab_H2.pdf", useDingbats=FALSE)
+
+#Bipartite Geochem-Tagdata
+#SM_bipart=read.table("all_pearson_all_sig_bipart.txt",header=TRUE,row.names=1)
+#Linear display of bipartite network
+#Coords for mode "A"
+#coordP=cbind(rep(2,dim(SM_bipart)[1]), seq(1, dim(SM_bipart)[1])+20)
+# Coords for mode "P"
+#coordA=cbind(rep(4,dim(SM_bipart)[2])+4, seq(1, dim(SM_bipart)[2]))
+#mylayout=as.matrix(rbind(coordP, coordA))
+# Initialize and plot the network with a railway layout.
+#p=dim(SM_bipart)[1]
+#a=dim(SM_bipart)[2]
+#bipart_net=network::network(SM_bipart, matrix.type = "bipartite", ignore.eval = FALSE, names.eval = "weights")
+#network::set.vertex.attribute(bipart_net,"mode",c(rep("Geochem",p), rep("Taxa",a)))
+#Assign metabolic type to the vertex names
+#bp_vertex.names=as.data.frame(bipart_net %v% "vertex.names")
+#colnames(bp_vertex.names)="OTU1"
+#bp_nodes=join(bp_vertex.names,all_nodes2,by="OTU1")
+#bipart_ggnet=ggnet2(bipart_net, mode=2*mylayout,label=TRUE,label.trim=FALSE,color=bp_nodes$Metabolism,palette=metab_cols2)
+#ggsave(plot=bipart_ggnet,height=10,width=10,dpi=200,filename="SM2013_ggnet_bipart_chem.pdf", useDingbats=FALSE)
+```
+
+### Corelation of Proteome/Geochemistry/Tag data for Site H
+```{r OTU_Corr_siteH, fig.width=30,fig.height=30,message=FALSE}
+setwd("C:/Users/Kat/Desktop/Caltech/Manuscripts/Santa Monica basin/R/R markdown file")
+
+#chem and quant proteome (this is both the clam bed and orange mat cores)
+for_corr_prot_chem=read.table("quant_prot_geochem_forcorr.txt",header=TRUE,row.names=1)
+for_corr_prot_chem_2=as.matrix(for_corr_prot_chem)
+fcpc_pearsoncorr=rcorr(for_corr_prot_chem_2,type="pearson",na.action(na.omit(NA)))
+fcpc_pearsoncorr_pval=fcpc_pearsoncorr$P
+#write.table(fcpc_pearsoncorr$r,file="SM2013_quant_prot_geochem_pearson.txt",sep="\t")
+#write.table(fcpc_pearsoncorr$P,file="SM2013_quant_prot_geochem_pval.txt",sep="\t")
+#pdf("SM_corrmatrix_prot_chem.pdf",height=15,width=15)
+#corrplot_all=corrplot(fcpc_pearsoncorr$r, method="circle", p.mat=fcpc_pearsoncorr$P,insig="blank", tl.cex=1, tl.col="black", tl.srt=45)
+#dev.off()
+
+#L6 above 0.5% and quant proteome (this is only for the orange mat PC55)
+for_corr_prot_L6=read.table("quant_prot_L6_forcorr2.txt",header=TRUE,row.names=1)
+for_corr_prot_L6_2=as.matrix(for_corr_prot_L6)
+fcpl_pearsoncorr=rcorr(for_corr_prot_L6_2,type="pearson",na.action(na.omit(NA)))
+fcpl_pearsoncorr_pval=fcpl_pearsoncorr$P
+#write.table(fcpl_pearsoncorr$r,file="SM2013_quant_prot_L6_pearson2.txt",sep="\t")
+#write.table(fcpl_pearsoncorr$P,file="SM2013_quant_prot_L6_pval2.txt",sep="\t")
+#pdf("SM_corrmatrix_prot_L62.pdf",height=25,width=25)
+#corrplot_all=corrplot(fcpl_pearsoncorr$r, method="circle", p.mat=fcpl_pearsoncorr$P,insig="blank", tl.cex=1, tl.col="black", tl.srt=45)
+#dev.off()
+
+# Reshape matrices for cytoscape input and rbind p-values with corr coefficients
+fcpl_pearson_cor_tri=upper.tri(fcpl_pearsoncorr$r,diag=F)
+fcpl.data.pearsoncor_copy=fcpl_pearsoncorr$r
+fcpl.data.pearsoncor_copy[!fcpl_pearson_cor_tri]=NA
+fcpl.data.pearsoncor_melted=na.omit(melt(fcpl.data.pearsoncor_copy,value.name="correlationCoef"))
+colnames(fcpl.data.pearsoncor_melted)=c("OTU1","OTU2","Pearson")
+#write.csv(all.data.pearsoncor_melted,"fcpl.data.pearsoncor_3col.txt")
+fcpl_pearson_pval_tri=upper.tri(fcpl_pearsoncorr_pval,diag=F)
+fcpl_pearsoncor_copy2=fcpl_pearsoncorr_pval
+fcpl_pearsoncor_copy2[!fcpl_pearson_pval_tri]=NA
+fcpl_pearson_pval_melted=na.omit(melt(fcpl_pearsoncor_copy2,value.name="pvalue"))
+colnames(fcpl_pearson_pval_melted)=c("OTU1","OTU2","Pearson_pval")
+fcpl_pearson_all=merge(fcpl.data.pearsoncor_melted,fcpl_pearson_pval_melted)
+#write.csv(fcpl_pearson_all,"fcpl_pearson_all_pval.txt")
+
+# subset data to include only pairings with p-val < 0.01
+fcpl_pearson_all_sig=subset(fcpl_pearson_all,fcpl_pearson_all$Pearson_pval<0.01)
+# Output an excel file that can be used in cytoscape
+#write.xlsx(fcpl_pearson_all_sig,file="SM2013_fcpl_corr_sig_pval_for_cytoscape.xlsx")
+
+#Bipartite Geochem-Tagdata
+#There's certainly a way to rearrange the cytoscape matrix for use in the bipartite analysis below, but I've been manually remaking this with subsets of positive correlations using index and match in excel to look like:
+#           OTUa   OTUb  OTUc  OTUd ...
+#variable1  NA    0.95  0.76  NA
+#variable2  0.5   0.65  NA    0.3
+#The command to fill the new array is as below and requires "Ctrl+Shift+Enter" to run: "=INDEX(A:B,MATCH(1,(A:A='value1')*(B:B='value2'),0),'col# of value')"
+
+fcpl_bipart=read.table("fcpl_pearson_all_sig_bipart.txt",header=TRUE,row.names=1)
+fcpl_node_char=read.table("quant_prot_L6_forcorr2_meta.txt",header=TRUE)
+
+pathway_cols=c("ATP_synthesis"="#771155","ABC_transporter"="#4477AA","Stress_response"="#44AAAA","Transport"="#77CCCC","Nitrogen_metabolism"="#117744","Sulfur_metabolism"="#777711","Energy_metabolism"="#AAAA44","Lipid_metabolism"="#774411","Secretion_Motility"="#AA7744","methane_metabolism"="#DDAA77","DNA_replication_and_repair"="#771122","Peptide_metabolism"="#AA4455","Carbon_metabolism"="#CE1620","Nucleotide_metabolism"="#6A3D9A","unknown"="#FF7F00","Amino_acid_metabolism"="#FB9A99","Taxa"="#FAEBD7")
+
+#Linear display of bipartite network
+
+  #Truth is this is a pretty ugly lookin mess of lines, and a more legible plot is        made by using cytoscape with the excel file made above. Subset that to include the     high-positive Pearson values (in this case that's everything >0)
+  #To make a linear or rail-road tie plot the data instead run the below code.
+
+#Coords for mode "A"
+coordP=cbind(rep(2,dim(fcpl_bipart)[1]), seq(1, dim(fcpl_bipart)[1]))
+# Coords for mode "P"
+coordA=cbind(rep(4,dim(fcpl_bipart)[2]), seq(1, dim(fcpl_bipart)[2])+30)
+mylayout=as.matrix(rbind(coordP, coordA))
+# Initialize and plot the network with a railway layout.
+p=dim(fcpl_bipart)[1]
+a=dim(fcpl_bipart)[2]
+fcpl_bipart_net=network::network(fcpl_bipart, matrix.type = "bipartite", ignore.eval = FALSE, names.eval = "weights")
+network::set.vertex.attribute(fcpl_bipart_net,"mode",c(rep("Peptide",p), rep("Taxa",a)))
+#Assign metabolic type to the vertex names
+fcpl_bp_vertex.names=as.data.frame(fcpl_bipart_net %v% "vertex.names")
+colnames(fcpl_bp_vertex.names)="OTU1"
+fcpl_bp_nodes=join(fcpl_bp_vertex.names,fcpl_node_char,by="OTU1")
+fcpl_bipart_ggnet=ggnet2(fcpl_bipart_net, mode=2*mylayout,label=TRUE,label.trim=FALSE,color=fcpl_bp_nodes$Pathway,palette=pathway_cols)
+ggsave(plot=fcpl_bipart_ggnet,height=10,width=10,dpi=200,filename="SM2013_fcpl_ggnet_bipart_chem.pdf", useDingbats=FALSE)
+```
